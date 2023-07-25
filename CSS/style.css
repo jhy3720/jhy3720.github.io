@@ -1,0 +1,470 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Varela+Round&display=swap');
+
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+a, a:link, a:visited{
+    color:inherit;
+    text-decoration: none;
+}
+li{
+    list-style: none;
+}
+.container{
+    width: 1140px;
+    margin:0 auto ;
+}
+/* header */
+header{
+    position: fixed;
+    top: 0;
+    color:black;
+    z-index: 1;
+    width:100%;
+    padding:1rem;
+}
+header .container{
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+     width: 100%;
+}
+header button{
+    background-color: transparent;
+    border: 0;
+    color: white;
+    cursor: pointer;
+}
+header h1 button{
+    font-size: 2rem;
+    font-weight: bold;
+}
+header nav ul{
+    display: flex;
+}
+header nav ul li{
+    padding: 10px;
+}
+header nav ul li button{
+    font-size: 1.2rem;
+}
+header.active{
+    background-color: black;
+    animation: fadeIn 0.5s ease-in-out;
+}
+@keyframes fadeIn{
+    0%{
+        opacity: 0;
+    }
+    100%{
+        opacity: 1;
+    }
+}
+
+/*main*/
+main{
+    width: 100%;
+    height: 100vh;
+    color: white;
+    background-image: linear-gradient(rgba(0,0,0,0.8),rgba(0,0,0,0.8)), url('./img/silver.jpg');
+    background-size: cover;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+main h4{
+    font-size: 2rem;
+}
+
+main h2{
+    font-family: 'Varela Round', sans-serif;
+    font-size: 3.5rem;
+    margin: 2rem;
+    letter-spacing: 3px;
+}
+
+main p{
+    max-width: 500px;
+    margin: auto;
+    font-size: 1.25rem;
+    text-align: center;
+}
+main button.download{
+    background-color: transparent;
+    border: 3px solid white;
+    border-radius: 20px;
+    padding: 1rem 2rem;
+    margin: 3rem;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+main button.mouse{
+    background-color: transparent;
+    border: none;
+    color: white;
+    font-size: 2rem;
+    position: absolute;
+    bottom: 1rem;
+    left: 50%;
+    animation: upDown 1s ease-in-out infinite;
+}
+main h2 span::after{
+    content: "";
+    height: 40px;
+    width: 3px;
+    background-color: white;
+    display: inline-block;
+    animation: blink 0.7s linear infinite;
+}
+@keyframes blink{
+    0%{
+        opacity: 1;
+    }
+    100%{
+        opacity: 0;
+    }
+}
+
+@keyframes upDown{
+    0%{
+        bottom: 1rem;
+    }
+    50%{
+        bottom: 1.5rem;
+    }
+    100%{
+        bottom: 1rem;
+    }
+}
+/*section*/
+section{
+    font-family: 'Poppins', sans-serif;
+    padding: 5rem;
+}
+
+section:nth-child(2n){
+    background-color: #f8f8f8;
+}
+section .about-self::after{
+    content: '';
+    clear: both;
+    display: block;
+}
+section .title{
+    margin-bottom: 3rem;
+}
+section .title h4{
+    font-size: 1.35rem;
+    color: #ed4848;
+    position: relative;
+}
+section .title h2{
+    font-size:  3.5rem;
+}
+section .title p{
+    font-size: 1.15rem;
+}
+section{
+    font-family: 'Poppins', sans-serif;
+    padding: 5rem;
+}
+
+section:nth-child(2n){
+    background-color: #f8f8f8;
+}
+section .title{
+    margin-bottom: 3rem;
+}
+section .title h4{
+    font-size: 1.35rem;
+    color: #ed4848;
+    position: relative;
+}
+section .title h2{
+    font-size:  3.5rem;
+}
+section .title p{
+    font-size: 1.15rem;
+}
+/*about*/
+section .about-self::after{
+    content: "";
+    clear: both;
+    display: block;
+}
+section .about-self .left{
+    float: left;
+    width: 50%;
+}
+section .about-self .left img{
+    width: 100%;
+}
+section .about-self .right{
+    float: left;
+    width: 50%;
+    padding: 0 2rem;
+}
+section .about-self .right h3{
+    font-size: 2.25rem;
+    margin-bottom: 1rem;
+}
+section .about-self .right h3 span{
+    color: #ed4848;
+}
+section .about-self .right p{
+    font-size:  1.15rem;
+    margin: 1rem  0;
+}
+section .about-self .right .social{
+    font-size: 2.5rem;
+    margin-right: 0.2rem;
+}
+/*what*/
+section .do-me::after{
+    content: "";
+    display: block;
+    clear: both;
+}
+section .do-me .do-inner{
+    width: 30%;
+    padding: 2rem;
+    float: left;
+    background-color: #fff;
+    margin-right: 5%;
+    cursor: pointer;
+}
+section .do-me .do-inner:last-child{
+    width: 30%;
+    padding: 2rem;
+    float: left;
+    background-color: #fff;
+    margin-right: 0%;
+    cursor: pointer;
+}
+section .do-me .do-inner .icon i{
+    font-size: 2.5rem;
+    color: #ff6a6a;
+}
+section .do-me .do-inner .content h3{
+    font-size: 2rem;
+    margin: 1rem 0;
+}
+section .do-me .do-inner .content p{
+    font-size: 1.15rem;
+}
+section .do-me .do-inner:hover{
+    background-color: lightcoral;
+    color: white;
+}
+section .do-me .do-inner:hover .icon i{
+    color: white;
+}
+/*back*/
+.bg{
+    background: url(./img/computer.jpg)center center;
+    background-size: cover;
+    background-attachment: fixed;
+    height: 650px;
+}
+/*portfolio*/
+section .portfolio-me::after{
+    content: "";
+    display: block;
+    clear: both;
+}
+
+section .portfolio-me .portfolio-inner{
+    width: 30%;
+    margin-right: 5%;
+    background-color: white;
+    float: left;
+    padding: 1rem 1rem 1.5rem 1.5rem;
+    border: 1px, solid #ccc;
+    margin-bottom: 3rem;
+}
+section .portfolio-me .portfolio-inner:nth-child(3n){
+    margin-right: 0;
+
+}
+
+section .portfolio-me .portfolio-inner img{
+    width: 100%;
+    display: block;
+
+}
+section .portfolio-me .portfolio-inner strong{
+    color: #fa6a6a;
+    margin: 0.5rem 0;
+    display: block;    
+}
+section .portfolio-me .portfolio-inner h3{
+    font-size: 1.75rem;
+}
+/*contact*/
+section .contact-me::after{
+    content: "";
+    display: block;
+    clear: both;
+}
+
+section .contact-me .left{
+    width: 30%;
+    float: left;
+}
+section .contact-me .left .card{
+    border: 1px solid #ccc;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.25rem; 
+}
+
+section .contact-me .left .card .icon i{
+    font-size: 2rem;
+    margin-right: 15px;
+}  
+
+section .contact-me .right{
+    width: 65%;
+    float: left;
+    margin-left: 5%;
+    border: 1px solid #ccc;
+    padding: 1rem;
+}
+
+section .contact-me .right .form-group{
+    margin-bottom: 1rem;
+}
+
+section .contact-me .right .form-group label{
+    display: block;
+    margin-bottom: 1rem;
+}
+
+section .contact-me .right .form-group input{
+    width: 100%;
+    padding: 0.625rem;
+    outline: none;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+}
+
+section .contact-me .right .form-group input:focus{
+    border: 1px solid #719ece;
+    box-shadow: 0 0 10px #719ece;
+}
+
+section .contact-me .right .form-group textarea{
+    width: 100%;
+    height: 300px;
+    outline: none;
+    resize: none;
+    border: 1px solid #ccc;
+    border-radius: 10px;    
+}
+
+section .contact-me .right .form-group textarea:focus{
+    border: 1px solid #719ece;
+    box-shadow: 0 0 10px #719ece;
+}
+
+section .contact-me .right button{
+    width: 100%;
+    padding: 1rem;
+    background-color: #f78b00;
+    border: none;
+    color: white;
+}
+
+@media screen and (max-width:1140px){
+    main .container{
+        width:992px;
+    }
+    section .container{
+        width: 600px;
+    }
+    section .about-self .left{
+        width: 100%;
+        margin-bottom: 1.5rem;
+    }
+    section .about-self .right{
+        width: 100%;
+    }
+    section .do-me .do-inner{
+        width: 48%;
+        margin-bottom: 1.5rem;
+        margin-right: 0;
+    }
+    section .do-me .do-inner:nth-child(2n+1){
+        margin-right: 4%;
+    }
+    section .portfolio-me .portfolio-inner{
+        width: 48%;
+        margin-right: 0;
+    }
+    section .portfolio-me .portfolio-inner:nth-child(2n+1){
+        margin-right: 4%;
+    }
+    section .contact-me .left{
+        width: 100%;
+    }
+    section .contact-me .right{
+        width: 100%;
+        margin-left: 0;
+    }
+}
+@media screen and (max-width:992px){
+    html{
+        font-size: 14px;
+    }
+    main .container{
+        width:768px;
+    }
+    section .portfolio-me .portfolio-inner{
+        width: 100%;
+        margin-right: 0;
+    }
+}
+@media screen and (max-width:768px){
+    html{
+        font-size: 13px;
+    }
+    main .container{
+        width:576px;
+    }
+    section .container{
+        width: 400px;
+    }
+    section .do-me .do-inner{
+        width: 100%;
+        margin-right: 0;
+    } 
+}
+@media screen and (max-width:576px){
+    html{
+        font-size: 12px;
+    }
+    main .container{
+        width:400px;
+    }
+    section .container{
+        width: 360px;
+    }
+
+}
+@media screen and (max-width:400px){
+    html{
+        font-size: 11px;
+    }
+    main .container{
+        width:320px;
+    }
+    section .container{
+        width: 320px;
+    }
+}

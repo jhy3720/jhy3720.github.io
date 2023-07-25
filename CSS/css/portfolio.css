@@ -1,0 +1,33 @@
+section .portfolio-me::after{
+    content: "";
+    display: block;
+    clear: both;
+}
+
+section .portfolio-me .portfolio-inner{
+    width: 30%;
+    margin-right: 5%;
+    background-color: white;
+    float: left;
+    padding: 1rem 1rem 1.5rem 1.5rem;
+    border: 1px, solid #ccc;
+    margin-bottom: 3rem;
+}
+section .portfolio-me .portfolio-inner:nth-child(3n){
+    margin-right: 0;
+
+}
+
+section .portfolio-me .portfolio-inner img{
+    width: 100%;
+    display: block;
+
+}
+section .portfolio-me .portfolio-inner strong{
+    color: #fa6a6a;
+    margin: 0.5rem 0;
+    display: block;    
+}
+section .portfolio-me .portfolio-inner h3{
+    font-size: 1.75rem;
+}
