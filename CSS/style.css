@@ -238,7 +238,7 @@ section .do-me .do-inner{
     margin-right: 5%;
     cursor: pointer;
 }
-section .do-me .do-inner:last-child{
+section .do-me .do-inner:nth-child(3n){
     width: 30%;
     padding: 2rem;
     float: left;
@@ -279,13 +279,14 @@ section .portfolio-me::after{
 }
 
 section .portfolio-me .portfolio-inner{
-    width: 30%;
+    width: 45%;
     margin-right: 5%;
     background-color: white;
     float: left;
     padding: 1rem 1rem 1.5rem 1.5rem;
     border: 1px, solid #ccc;
     margin-bottom: 3rem;
+    cursor: pointer;
 }
 section .portfolio-me .portfolio-inner:nth-child(3n){
     margin-right: 0;
@@ -295,7 +296,6 @@ section .portfolio-me .portfolio-inner:nth-child(3n){
 section .portfolio-me .portfolio-inner img{
     width: 100%;
     display: block;
-
 }
 section .portfolio-me .portfolio-inner strong{
     color: #fa6a6a;
@@ -305,81 +305,7 @@ section .portfolio-me .portfolio-inner strong{
 section .portfolio-me .portfolio-inner h3{
     font-size: 1.75rem;
 }
-/*contact*/
-section .contact-me::after{
-    content: "";
-    display: block;
-    clear: both;
-}
 
-section .contact-me .left{
-    width: 30%;
-    float: left;
-}
-section .contact-me .left .card{
-    border: 1px solid #ccc;
-    padding: 1rem;
-    display: flex;
-    align-items: center;
-    margin-bottom: 1.25rem; 
-}
-
-section .contact-me .left .card .icon i{
-    font-size: 2rem;
-    margin-right: 15px;
-}  
-
-section .contact-me .right{
-    width: 65%;
-    float: left;
-    margin-left: 5%;
-    border: 1px solid #ccc;
-    padding: 1rem;
-}
-
-section .contact-me .right .form-group{
-    margin-bottom: 1rem;
-}
-
-section .contact-me .right .form-group label{
-    display: block;
-    margin-bottom: 1rem;
-}
-
-section .contact-me .right .form-group input{
-    width: 100%;
-    padding: 0.625rem;
-    outline: none;
-    border: 1px solid #ccc;
-    border-radius: 10px;
-}
-
-section .contact-me .right .form-group input:focus{
-    border: 1px solid #719ece;
-    box-shadow: 0 0 10px #719ece;
-}
-
-section .contact-me .right .form-group textarea{
-    width: 100%;
-    height: 300px;
-    outline: none;
-    resize: none;
-    border: 1px solid #ccc;
-    border-radius: 10px;    
-}
-
-section .contact-me .right .form-group textarea:focus{
-    border: 1px solid #719ece;
-    box-shadow: 0 0 10px #719ece;
-}
-
-section .contact-me .right button{
-    width: 100%;
-    padding: 1rem;
-    background-color: #f78b00;
-    border: none;
-    color: white;
-}
 
 @media screen and (max-width:1140px){
     main .container{
