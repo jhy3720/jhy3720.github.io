@@ -246,6 +246,25 @@ section .do-me .do-inner:nth-child(3n){
     margin-right: 0%;
     cursor: pointer;
 }
+section .do-me .do-inner:nth-child(4){
+    width: 30%;
+    padding: 2rem;
+    float: left;
+    background-color: #fff;
+    margin-left: 15%;
+    margin-right: 5%;
+    cursor: pointer;
+}
+section .do-me .do-inner:nth-child(n+4){
+    width: 30%;
+    padding: 2rem;
+    float: left;
+    background-color: #fff;
+    margin-top: 5%;
+    margin-right: 5%;
+    cursor: pointer;
+}
+
 section .do-me .do-inner .icon i{
     font-size: 2.5rem;
     color: #ff6a6a;
@@ -264,6 +283,24 @@ section .do-me .do-inner:hover{
 section .do-me .do-inner:hover .icon i{
     color: white;
 }
+
+#progress{
+    appearance: none;
+}
+
+#progress::-webkit-progress-bar{
+    background:#f0f0f0;
+    border-radius:10px;
+    box-shadow: inset 3px 3px 10px #ccc;
+}
+
+#progress::-webkit-progress-value{
+    border-radius:10px;
+    background: #fa6a6a;
+    background: -webkit-linear-gradient(to right, #fcc4c4, #ff8585);
+    background: linear-gradient(to right, #fcc4c4, #fa6a6a);
+}
+
 /*back*/
 .bg{
     background: url(./img/computer.jpg)center center;
