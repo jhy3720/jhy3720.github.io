@@ -1,7 +1,8 @@
 <%@ page language="java" contentType="text/html; charset=utf-8" pageEncoding="utf-8"%> 
 <% request.setCharacterEncoding("utf-8"); %> 
 <!doctype html> <!-- -/beanFind.jsp --> 
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/> 
+<html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/> 
 <meta name="viewport" content="width=device-width, initial-scale=1"/> 
 <style>
 * {padding:0; margin:0;}
@@ -24,7 +25,8 @@ ul.level_1 > li > ul {list-style:none; }
 #loginBtn button { margin-left:5px; height:42px;} 
 #find_form{width:150px; height:20px; color:red;} 
 </style>
-<title>로그인 실습</title>
+<title>도서검색</title>
+
 <jsp:useBean id="dto" class="studpkg.StudDTO" scope="session"/> 
 <jsp:useBean id="dao" class="studpkg.StudDAO" scope="session"/>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script> 
