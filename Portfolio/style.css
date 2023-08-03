@@ -343,6 +343,22 @@ section .portfolio-me .portfolio-inner h3{
     font-size: 1.75rem;
 }
 
+section .portfolio-me .portfolio-inner:hover{
+    background-color: lightcoral;
+    color: white;
+}
+
+section .portfolio-me .portfolio-inner:hover img{
+    background-color: lightcoral;
+    color: white;
+}
+
+
+section .portfolio-me .portfolio-inner:hover strong{
+    color: #ffffff;
+    margin: 0.5rem 0;
+    display: block;    
+}
 
 @media screen and (max-width:1140px){
     main .container{

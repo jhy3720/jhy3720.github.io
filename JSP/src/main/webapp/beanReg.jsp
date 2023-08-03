@@ -22,12 +22,12 @@ th, td { text-align:center; padding: 10px; vertical-align:bottom;}
 tr:nth-child(odd) { background-color: lightgray; } 
 th { background-color: gray; color:white;} 
 table.ex1 { table-layout: auto; }
-</style><title>로그인 실습</title>
+</style><title>회원관리</title>
 <jsp:useBean id="dto" class="studpkg.StudDTO"/> 
 <jsp:setProperty name="dto" property="*"/> 
 <jsp:useBean id="dao" class="studpkg.StudDAO"/>
 </head> 
-<body><header><h2>실습을 환영합니다l</h2></header> 
+<body><header><h2>회원관리</h2></header> 
 <nav><ul> <li><a href="./beanLogin.html"> 로그인</a></li><li><a href="./beanReg.html"> 회원등록 </a></li></ul></nav> 
 <section> 
 <fieldset class="fset"><legend> 등록결과</legend> 

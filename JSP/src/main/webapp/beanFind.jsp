@@ -25,7 +25,7 @@ ul.level_1 > li > ul {list-style:none; }
 #loginBtn button { margin-left:5px; height:42px;} 
 #find_form{width:150px; height:20px; color:red;} 
 </style>
-<title>도서검색</title>
+<title>회원관리</title>
 
 <jsp:useBean id="dto" class="studpkg.StudDTO" scope="session"/> 
 <jsp:useBean id="dao" class="studpkg.StudDAO" scope="session"/>
@@ -36,7 +36,7 @@ if (!flag) {
 	response.sendRedirect("./beanHome.html");
 } else { 
 %> 
-<header><h2>실습을 환영합니다</h2></header> 
+<header><h2>회원관리</h2></header> 
 <nav><ul> <li><a href="/beanLogout.jsp"> 로그아웃</a></li><li><a href="/beanFind.jsp">검색</a></li></ul></nav> 
 <section> 
 <form action="./beanResult.jsp" method="post"> 

@@ -24,7 +24,7 @@ table {width:100%; height:80%; } th, td { text-align:center; padding: 10px; vert
 tr:nth-child(odd) { background-color: lightgray; } th { background-color: gray; color:white;} 
 table.ex1 {table-layout: auto; } </style>
 
-<title>로그인 실습</title>
+<title>회원관리</title>
 <jsp:useBean id="dto" class="studpkg.StudDTO" scope="session"/> 
 <jsp:useBean id="dao" class="studpkg.StudDAO" scope="session"/> 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
@@ -40,7 +40,7 @@ if (!flag) {
 	response.sendRedirect("./beanHome.html"); 
 	} else { 
 %> 
-<header><h2>실습을 환영합니다.</h2></header> 
+<header><h2>회원관리</h2></header> 
 <nav><ul> 
 <li><a href="./beanLogout.jsp"> 로그아웃 </a></li><li><a href="./beanFind.jsp">검색 </a></li></ul></nav> 
 <section> 
