@@ -316,7 +316,7 @@ section .portfolio-me::after{
 }
 
 section .portfolio-me .portfolio-inner{
-    width: 45%;
+    width: 30%;
     margin-right: 5%;
     background-color: white;
     float: left;
