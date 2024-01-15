@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Random</title>
+	<script>
+		var Probability = null;
+
+		var successCount = 0;
+
+		var failureCount = 0;
+
+		if (Probability === null) {
+
+			Probability = prompt("성공할 확률을 입력하세요 (0~100): ");
+			Probability /= 100;
+
+		}
+
+		function buttonClick() {
+
+			var randomNumber = Math.random();
+
+			if (randomNumber < Probability) {
+
+				alert("성공!");
+				successCount++;
+
+			} else {
+
+				alert("실패.");
+				failureCount++;
+
+			}
+
+			document.getElementById("Probability").innerHTML = Probability * 100 + "%";
+			document.getElementById("successCount").innerHTML = successCount;
+			document.getElementById("failureCount").innerHTML = failureCount;
+		}
+	</script>
+</head>
+<body>
+
+	<button onclick="buttonClick()">버튼</button>
+
+	<p>지정된 확률: <span id="Probability">0%</span></p>
+
+	<p>성공 횟수: <span id="successCount">0</span></p>
+
+	<p>실패 횟수: <span id="failureCount">0</span></p>
+
+</body>
+</html>
