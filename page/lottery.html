@@ -1,0 +1,79 @@
+<html>
+<head>
+  <style>
+
+    button {
+
+      font-size: 20px;
+
+      padding: 10px;
+
+    }
+
+    p {
+
+      font-size: 30px;
+
+      color: blue;
+
+    }
+
+  </style>
+
+</head>
+
+<body>
+  <button id="btn">번호 생성</button>
+
+  <p id="result"></p>
+
+  <script>
+
+    // 버튼 요소를 찾는다
+    var btn = document.getElementById("btn");
+
+    // 결과를 표시할 요소를 찾는다
+    var result = document.getElementById("result");
+
+    // 버튼을 클릭하면 함수를 실행한다
+    btn.addEventListener("click", function() {
+
+      // 1에서 45사이의 숫자 6개를 저장할 배열을 만든다
+      var numbers = [];
+
+      // 6번 반복한다
+      for (var i = 0; i < 6; i++) {
+
+        // 1에서 45사이의 랜덤한 정수를 생성한다
+        var num = Math.floor(Math.random() * 45) + 1;
+
+        // 배열에 이미 같은 숫자가 있는지 확인한다
+        if (numbers.includes(num)) {
+
+          // 있으면 i를 하나 감소시키고 다시 반복한다
+          i--;
+
+        } else {
+
+          // 없으면 배열에 추가한다
+          numbers.push(num);
+
+        }
+
+      }
+
+      // 배열을 오름차순으로 정렬한다
+      numbers.sort(function(a, b) {
+
+        return a - b;
+
+      });
+
+      // 배열을 문자열로 변환하고 결과 요소에 표시한다
+      result.textContent = numbers.join(", ");
+
+    });
+  </script>
+
+</body>
+</html>
