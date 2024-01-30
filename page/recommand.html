@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+
+<html lang="ko">
+
+<head>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>점심메뉴 추천 사이트</title>
+
+  <style>
+
+    /* CSS 스타일을 작성 */
+
+  </style>
+
+</head>
+
+<body>
+
+  <h1>점심메뉴 추천</h1>
+
+  <p>원하는 카테고리를 선택하고 추천받기 버튼을 눌러보세요.</p>
+
+  <div id="category-buttons">
+
+    <button class="category-button">한식</button>
+    <button class="category-button">중식</button>
+    <button class="category-button">일식</button>
+    <button class="category-button">양식</button>
+
+  </div>
+
+  <button id="recommend-button">추천받기</button>
+
+  <p id="result-text"></p>
+  
+  <script>
+
+    //카테고리의 범주를 객체로 정의
+    var categories = {
+      "한식": ["찜닭", "전", "된장찌개", "비빔밥", "칼국수", "불고기", "제육볶음", "떡볶이", "국밥", "김치찌개", "쌈밥", "만두국"],
+      "중식": ["짜장면", "볶음밥", "마파두부", "짬뽕", "잡채밥", "양꼬치"],
+      "일식": ["규동", "우동", "미소장국", "가츠동", "카레", "라멘", "초밥", "회덮밥"],
+      "양식": ["파스타", "피자", "그라탕", "햄버거", "핫도그", "치킨", "잠발라야", "케밥", "필라프"]
+    };
+
+    //요소를 선택
+    var categoryButtons = document.querySelectorAll(".category-button");
+    var recommendButton = document.querySelector("#recommend-button");
+    var resultText = document.querySelector("#result-text");
+
+    //선택된 카테고리를 저장 변수 선언
+    var selectedCategory = null;
+
+    //클릭 이벤트 리스너
+    categoryButtons.forEach(function(button) {
+
+      button.addEventListener("click", function() {
+
+        //이전에 선택된 버튼 초기화.
+        if (selectedCategory) {
+
+          selectedCategory.classList.remove("selected");
+
+        }
+
+        //선택된 버튼의 스타일을 변경
+        button.classList.add("selected");
+
+        selectedCategory = button;
+
+        //결과 초기화합니다.
+        resultText.textContent = "";
+
+      });
+    });
+
+    //추천받기 버튼에 클릭 이벤트 리스너 추가
+    recommendButton.addEventListener("click", function() {
+
+      //카테고리가 선택되지 않았으면 alert
+      if (!selectedCategory) {
+
+        alert("카테고리를 선택해주세요.");
+
+        return;
+      }
+
+      //선택된 카테고리의 이름
+      var categoryName = selectedCategory.textContent;
+
+      //해당 카테고리의 음식 배열
+      var foods = categories[categoryName];
+
+      //배열에서 랜덤하게 하나를 선택
+      var randomIndex = Math.floor(Math.random() * foods.length);
+
+      var randomFood = foods[randomIndex];
+
+      //결과 출력
+      resultText.textContent = categoryName + " 카테고리에서 " + randomFood + "을(를) 추천합니다.";
+
+    });
+
+  </script>
+</body>
+</html>
