@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>뽑기 웹 사이트</title>
+
+</head>
+
+<body>
+
+  <h1>뽑기 웹 사이트</h1>
+
+  <p>상품명과 확률을 입력하고 시작하기 버튼을 눌러보세요.</p>
+
+  <div id="inputs" style="display: flex; flex-direction: column;">
+
+    <input type="text" id="item1" placeholder="상품명">
+
+    <input type="number" id="prob1" placeholder="확률(%)">
+
+    <button id="add">선택지 추가</button>
+
+    <button id="start">시작하기</button>
+
+  </div>
+
+  <div id="results" style="display: none;">
+
+    <p>입력한 상품과 확률은 다음과 같습니다.</p>
+
+    <ul id="list"></ul>
+
+    <button id="draw">추첨하기</button>
+
+  </div>
+
+  <script>
+
+    //선택지 추가 버튼을 누르면 새로운 입력창을 생성하는 함수
+    function addInput() {
+
+      //입력창의 개수를 세는 변수
+      let count = document.querySelectorAll("input[type=text]").length;
+
+      //새로운 입력창을 만드는 코드
+      let newItem = document.createElement("input");
+      newItem.type = "text";
+      newItem.id = "item" + (count + 1);
+      newItem.placeholder = "상품명";
+
+      let newProb = document.createElement("input");
+      newProb.type = "number";
+      newProb.id = "prob" + (count + 1);
+      newProb.placeholder = "확률(%)";
+
+      //입력창을 화면에 추가하는 코드
+      let inputs = document.getElementById("inputs");
+
+      inputs.insertBefore(newItem, document.getElementById("add"));
+      inputs.insertBefore(newProb, document.getElementById("add"));
+
+    }
+
+    //시작하기 버튼을 누르면 입력한 확률의 합이 100%인지 확인하는 함수
+    function checkProb() {
+
+      //입력창의 개수를 세는 변수
+      let count = document.querySelectorAll("input[type=text]").length;
+
+      //입력한 확률의 합을 저장하는 변수
+      let sum = 0;
+
+      for (let i = 1; i <= count; i++) {
+
+        sum += Number(document.getElementById("prob" + i).value);
+
+      }
+
+      //확률의 합이 100% 미만이면 alert를 보내고 리스트를 보여주지 않는 코드
+      if (sum < 100) {
+
+        alert("확률이 100% 미만입니다. 확률을 다시 입력해주세요.");
+        return; // 함수를 종료
+
+      }
+
+      //확률의 합이 100% 이상이면 alert를 보내고 리스트를 보여주지 않는 코드
+
+      if (sum > 100) {
+
+        alert("확률이 100% 이상입니다. 확률을 다시 입력해주세요.");
+        return; // 함수를 종료
+
+      }
+
+      //확률의 합이 100%이면 리스트를 보여주는 코드
+      showList();
+
+    }
+
+    //시작하기 버튼을 누르면 입력한 상품과 확률을 리스트로 보여주는 함수
+    function showList() {
+
+      //입력창의 개수를 세는 변수
+      let count = document.querySelectorAll("input[type=text]").length;
+
+      //입력한 상품과 확률을 배열로 저장하는 코드
+      let items = [];
+      let probs = [];
+
+      for (let i = 1; i <= count; i++) {
+
+        items.push(document.getElementById("item" + i).value);
+        probs.push(document.getElementById("prob" + i).value);
+
+      }
+
+      //리스트를 만들고 화면에 보여주는 코드
+      let list = document.getElementById("list");
+
+      for (let i = 0; i < count; i++) {
+
+        let li = document.createElement("li");
+
+        li.textContent = items[i] + ": " + probs[i] + "%";
+
+        list.appendChild(li);
+
+      }
+
+      //입력창을 숨기고 결과창을 보여주는 코드
+      document.getElementById("inputs").style.display = "none";
+      document.getElementById("results").style.display = "block";
+
+    }
+
+    //추첨하기 버튼을 누르면 확률에 따라 랜덤하게 상품을 선택하고 alert로 보여주는 함수
+    function drawItem() {
+
+      //입력창의 개수를 세는 변수
+      let count = document.querySelectorAll("input[type=text]").length;
+
+      //입력한 상품과 확률을 배열로 저장하는 코드
+      let items = [];
+      let probs = [];
+
+      for (let i = 1; i <= count; i++) {
+
+        items.push(document.getElementById("item" + i).value);
+
+        probs.push(document.getElementById("prob" + i).value);
+
+      }
+
+      //확률에 따라 랜덤하게 상품을 선택하는 코드
+      let random = Math.random() * 100; //0부터 100 사이의 랜덤한 숫자
+      let sum = 0; //확률의 누적합을 저장하는 변수
+      let result = ""; //선택된 상품을 저장하는 변수
+
+      for (let i = 0; i < count; i++) {
+
+        sum += Number(probs[i]); //확률을 더해줌
+
+        if (random < sum) { //랜덤한 숫자가 누적합보다 작으면
+
+          result = items[i]; //해당 상품을 선택
+
+          break; //반복문을 종료
+
+        }
+
+      }
+
+      //결과를 보여주는 코드
+      alert("축하합니다! " + result + "을(를) 뽑으셨습니다!");
+
+    }
+
+    //버튼에 이벤트 리스너를 추가하는 코드
+    document.getElementById("add").addEventListener("click", addInput);
+    document.getElementById("start").addEventListener("click", checkProb);
+    document.getElementById("draw").addEventListener("click", drawItem);
+
+  </script>
+
+</body></html>
