@@ -1,109 +1,409 @@
 <!DOCTYPE html>
-
 <html lang="ko">
-
 <head>
-
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>점심메뉴 추천 사이트</title>
-
-  <style>
-
-    /* CSS 스타일을 작성 */
-
-  </style>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>라이어 게임</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        /* 간단한 애니메이션 효과 */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        /* 선택된 버튼 스타일 */
+        .topic-btn.selected {
+            background-color: #3B82F6; /* blue-600 */
+            color: white;
+            border-color: #3B82F6;
+        }
+    </style>
 </head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
 
-<body>
+    <div id="app" class="bg-white p-6 sm:p-8 rounded-2xl shadow-lg w-full max-w-lg transition-all duration-500">
 
-  <h1>점심메뉴 추천</h1>
+        <!-- 1. 설정 화면 -->
+        <div id="setup-screen" class="fade-in">
+            <div class="text-center mb-6">
+                <h1 class="text-3xl font-bold text-gray-800">라이어 게임 🤥</h1>
+                <p class="text-gray-500 mt-2">라이어를 찾아내세요!</p>
+            </div>
 
-  <p>원하는 카테고리를 선택하고 추천받기 버튼을 눌러보세요.</p>
+            <!-- 인원 설정 -->
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label for="player-count" class="block text-sm font-medium text-gray-700 mb-2">참가 인원</label>
+                    <input type="number" id="player-count" value="4" min="3" max="10" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 text-center text-gray-800 focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="wolf-count" class="block text-sm font-medium text-gray-700 mb-2">라이어 수</label>
+                    <input type="number" id="wolf-count" value="1" min="1" max="5" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 text-center text-gray-800 focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
 
-  <div id="category-buttons">
+            <!-- 주제 선택 -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">주제 선택</label>
+                <div id="topic-container" class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                    <!-- 주제 버튼은 JS로 생성 -->
+                </div>
+            </div>
+            
+            <button id="start-game-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:-translate-y-0.5 shadow-md">
+                게임 시작
+            </button>
+            <p id="error-message" class="text-red-500 text-sm text-center mt-2 h-4"></p>
+        </div>
 
-    <button class="category-button">한식</button>
-    <button class="category-button">중식</button>
-    <button class="category-button">일식</button>
-    <button class="category-button">양식</button>
+        <!-- 2. 게임 진행 화면 -->
+        <div id="game-screen" class="hidden fade-in">
+            <div class="text-center mb-6">
+                <h1 class="text-2xl font-bold text-gray-800">단어 확인</h1>
+                <p class="text-gray-500 mt-2">자신의 번호를 눌러 단어를 확인하세요.</p>
+            </div>
+            <div id="player-buttons" class="grid grid-cols-3 sm:grid-cols-4 gap-4">
+                <!-- 플레이어 버튼 생성 -->
+            </div>
+            <button id="show-result-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition mt-6 shadow-md" disabled>
+                결과 보기
+            </button>
+        </div>
 
-  </div>
+        <!-- 3. 결과 화면 -->
+        <div id="result-screen" class="hidden fade-in text-center">
+             <h1 class="text-2xl font-bold text-gray-800 mb-4">게임 결과</h1>
+             <div class="bg-gray-50 p-6 rounded-lg">
+                <p class="text-lg mb-2">라이어는 <span id="wolf-players" class="font-bold text-red-500"></span>번 이었습니다!</p>
+                <div class="space-y-2 text-xl">
+                    <p> 시민 단어: <span id="citizen-word" class="font-bold text-blue-600"></span></p>
+                    <p> 라이어 단어: <span id="wolf-word" class="font-bold text-red-600"></span></p>
+                </div>
+             </div>
+             <button id="restart-game-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition mt-6 shadow-md">
+                새 게임
+            </button>
+        </div>
 
-  <button id="recommend-button">추천받기</button>
+        <!-- 단어 확인 모달 -->
+        <div id="word-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-2xl p-8 text-center max-w-sm w-full">
+                <p class="text-lg mb-2">당신의 단어는...</p>
+                <p id="modal-word" class="text-4xl font-bold my-4"></p>
+                <button id="close-modal-btn" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg transition">
+                    확인했습니다
+                </button>
+            </div>
+        </div>
 
-  <p id="result-text"></p>
-  
-  <script>
+    </div>
 
-    //카테고리의 범주를 객체로 정의
-    var categories = {
-      "한식": ["찜닭", "전", "된장찌개", "비빔밥", "칼국수", "불고기", "제육볶음", "떡볶이", "국밥", "김치찌개", "쌈밥", "만두국"],
-      "중식": ["짜장면", "볶음밥", "마파두부", "짬뽕", "잡채밥", "양꼬치"],
-      "일식": ["규동", "우동", "미소장국", "가츠동", "카레", "라멘", "초밥", "회덮밥"],
-      "양식": ["파스타", "피자", "그라탕", "햄버거", "핫도그", "치킨", "잠발라야", "케밥", "필라프"]
-    };
+    <script>
+        const wordsData = {
+            '음식': [
+                { citizen: '짜장면', wolf: '짬뽕', emoji: '🍜' }, { citizen: '김치찌개', wolf: '된장찌개', emoji: '🥘' },
+                { citizen: '피자', wolf: '햄버거', emoji: '🍕' }, { citizen: '떡볶이', wolf: '순대', emoji: '🍢' },
+                { citizen: '라면', wolf: '우동', emoji: '🍥' }, { citizen: '사과', wolf: '배', emoji: '🍎' },
+                { citizen: '콜라', wolf: '사이다', emoji: '🥤' }, { citizen: '치킨', wolf: '닭강정', emoji: '🍗' },
+                { citizen: '삼겹살', wolf: '목살', emoji: '🥓' }, { citizen: '초밥', wolf: '회', emoji: '🍣' },
+                { citizen: '냉면', wolf: '막국수', emoji: '🍜' }, { citizen: '아메리카노', wolf: '라떼', emoji: '☕' },
+                { citizen: '팥빙수', wolf: '과일빙수', emoji: '🍧' }, { citizen: '만두', wolf: '찐빵', emoji: '🥟' },
+                { citizen: '비빔밥', wolf: '볶음밥', emoji: '🍚' }, { citizen: '스테이크', wolf: '돈까스', emoji: '🥩' },
+                { citizen: '카레', wolf: '짜장', emoji: '🍛' }, { citizen: '샌드위치', wolf: '토스트', emoji: '🥪' },
+                { citizen: '아이스크림', wolf: '샤베트', emoji: '🍦' }, { citizen: '샤브샤브', wolf: '스키야키', emoji: '🍲' },
+                { citizen: '김밥', wolf: '주먹밥', emoji: '🍙' },{ citizen: '케이크', wolf: '파이', emoji: '🍰' },
+                { citizen: '푸딩', wolf: '젤리', emoji: '🍮' }, { citizen: '도넛', wolf: '꽈배기', emoji: '🍩' },
+            ],
+            '직업': [
+                { citizen: '의사', wolf: '간호사', emoji: '👨‍⚕️' }, { citizen: '경찰', wolf: '소방관', emoji: '👮‍♀️' },
+                { citizen: '선생님', wolf: '교수', emoji: '👩‍🏫' }, { citizen: '개발자', wolf: '디자이너', emoji: '💻' },
+                { citizen: '가수', wolf: '배우', emoji: '🎤' }, { citizen: '요리사', wolf: '제빵사', emoji: '👨‍🍳' },
+                { citizen: '운동선수', wolf: '감독', emoji: '⚽' }, { citizen: '작가', wolf: '기자', emoji: '✍️' },
+                { citizen: '파일럿', wolf: '승무원', emoji: '✈️' }, { citizen: '미용사', wolf: '네일리스트', emoji: '💇‍♀️' },
+                { citizen: '판사', wolf: '검사', emoji: '⚖️' }, { citizen: '건축가', wolf: '인테리어 디자이너', emoji: '🏠' },
+                { citizen: '마술사', wolf: '서커스 단원', emoji: '🎩' }, { citizen: '약사', wolf: '수의사', emoji: '💊' },
+                { citizen: '성우', wolf: '아나운서', emoji: '🎙️' }, { citizen: '유튜버', wolf: 'BJ', emoji: '📹' },
+                { citizen: '모델', wolf: '패션 디자이너', emoji: '💃' }, { citizen: '군인', wolf: '경호원', emoji: '🎖️' },
+                { citizen: '화가', wolf: '조각가', emoji: '🎨' }, { citizen: '대통령', wolf: '국회의원', emoji: '🏛️' },
+                { citizen: '농부', wolf: '어부', emoji: '🧑‍🌾' },{ citizen: '변호사', wolf: '법무사', emoji: '📜' },
+                { citizen: '바리스타', wolf: '소믈리에', emoji: '☕' }, { citizen: '천문학자', wolf: '점성술사', emoji: '🔭' },
+            ],
+            '전자제품': [
+                { citizen: '스마트폰', wolf: '태블릿', emoji: '📱' }, { citizen: '노트북', wolf: '데스크탑', emoji: '💻' },
+                { citizen: 'TV', wolf: '모니터', emoji: '📺' }, { citizen: '에어컨', wolf: '선풍기', emoji: '💨' },
+                { citizen: '세탁기', wolf: '건조기', emoji: '🧺' }, { citizen: '냉장고', wolf: '김치냉장고', emoji: '🧊' },
+                { citizen: '카메라', wolf: '캠코더', emoji: '📷' }, { citizen: '헤드폰', wolf: '이어폰', emoji: '🎧' },
+                { citizen: '마우스', wolf: '키보드', emoji: '🖱️' }, { citizen: '스피커', wolf: '사운드바', emoji: '🔊' },
+                { citizen: '전자레인지', wolf: '오븐', emoji: '🔥' }, { citizen: '청소기', wolf: '로봇청소기', emoji: '🧹' },
+                { citizen: '프린터', wolf: '스캐너', emoji: '🖨️' }, { citizen: '드론', wolf: 'RC카', emoji: '🚁' },
+                { citizen: '전기밥솥', wolf: '압력밥솥', emoji: '🍚' }, { citizen: '믹서기', wolf: '착즙기', emoji: '🥤' },
+                { citizen: '공기청정기', wolf: '가습기', emoji: '🌬️' }, { citizen: '빔프로젝터', wolf: '스크린', emoji: '📽️' },
+                { citizen: '스마트워치', wolf: '스마트밴드', emoji: '⌚' }, { citizen: '전기면도기', wolf: '헤어드라이어', emoji: '💈' },
+                { citizen: '보조배터리', wolf: '충전기', emoji: '🔋' },{ citizen: '전기장판', wolf: '온수매트', emoji: '🛌' },
+                { citizen: '게임기', wolf: 'VR기기', emoji: '🎮' }, { citizen: '내비게이션', wolf: '블랙박스', emoji: '🚗' },
+            ],
+            '동물': [
+                { citizen: '강아지', wolf: '고양이', emoji: '🐶' }, { citizen: '호랑이', wolf: '사자', emoji: '🐯' },
+                { citizen: '코끼리', wolf: '기린', emoji: '🐘' }, { citizen: '토끼', wolf: '거북이', emoji: '🐰' },
+                { citizen: '돌고래', wolf: '고래', emoji: '🐬' }, { citizen: '닭', wolf: '오리', emoji: '🐔' },
+                { citizen: '양', wolf: '염소', emoji: '🐑' }, { citizen: '팬더', wolf: '곰', emoji: '🐼' },
+                { citizen: '펭귄', wolf: '북극곰', emoji: '🐧' }, { citizen: '원숭이', wolf: '침팬지', emoji: '🐒' },
+                { citizen: '뱀', wolf: '도마뱀', emoji: '🐍' }, { citizen: '독수리', wolf: '매', emoji: '🦅' },
+                { citizen: '악어', wolf: '하마', emoji: '🐊' }, { citizen: '사슴', wolf: '노루', emoji: '🦌' },
+                { citizen: '상어', wolf: '가오리', emoji: '🦈' }, { citizen: '다람쥐', wolf: '청설모', emoji: '🐿️' },
+                { citizen: '여우', wolf: '늑대', emoji: '🦊' }, { citizen: '캥거루', wolf: '코알라', emoji: '🦘' },
+                { citizen: '거미', wolf: '전갈', emoji: '🕷️' }, { citizen: '나비', wolf: '나방', emoji: '🦋' },
+                { citizen: '햄스터', wolf: '기니피그', emoji: '🐹' },{ citizen: '개구리', wolf: '두꺼비', emoji: '🐸' },
+                { citizen: '말', wolf: '얼룩말', emoji: '🐴' }, { citizen: '낙타', wolf: '라마', emoji: '🐫' },
+            ],
+            '스포츠': [
+                { citizen: '축구', wolf: '야구', emoji: '⚽' }, { citizen: '농구', wolf: '배구', emoji: '🏀' },
+                { citizen: '수영', wolf: '달리기', emoji: '🏊‍♀️' }, { citizen: '테니스', wolf: '배드민턴', emoji: '🎾' },
+                { citizen: '스키', wolf: '스노보드', emoji: '🎿' }, { citizen: '양궁', wolf: '사격', emoji: '🏹' },
+                { citizen: '태권도', wolf: '유도', emoji: '🥋' }, { citizen: '복싱', wolf: '레슬링', emoji: '🥊' },
+                { citizen: '골프', wolf: '하키', emoji: '⛳' }, { citizen: '볼링', wolf: '당구', emoji: '🎳' },
+                { citizen: '서핑', wolf: '카누', emoji: '🏄' }, { citizen: '사이클', wolf: '마라톤', emoji: '🚴' },
+                { citizen: '체조', wolf: '피겨스케이팅', emoji: '🤸‍♀️' }, { citizen: '펜싱', wolf: '검도', emoji: '🤺' },
+                { citizen: '클라이밍', wolf: '등산', emoji: '🧗' }, { citizen: '탁구', wolf: '스쿼시', emoji: '🏓' },
+                { citizen: '역도', wolf: '씨름', emoji: '🏋️' }, { citizen: '컬링', wolf: '아이스하키', emoji: '🥌' },
+                { citizen: '럭비', wolf: '미식축구', emoji: '🏉' }, { citizen: 'F1', wolf: '나스카', emoji: '🏎️' },
+                { citizen: '승마', wolf: '폴로', emoji: '🏇' },{ citizen: '핸드볼', wolf: '족구', emoji: '🥅' },
+                { citizen: '스케이트', wolf: '인라인', emoji: '⛸️' }, { citizen: '다이빙', wolf: '싱크로나이즈', emoji: '🌊' },
+            ],
+            '장소': [
+                { citizen: '학교', wolf: '학원', emoji: '🏫' }, { citizen: '바다', wolf: '산', emoji: '🏞️' },
+                { citizen: '백화점', wolf: '시장', emoji: '🏬' }, { citizen: '영화관', wolf: '공연장', emoji: '🎬' },
+                { citizen: '도서관', wolf: '서점', emoji: '📚' }, { citizen: '병원', wolf: '약국', emoji: '🏥' },
+                { citizen: '공항', wolf: '기차역', emoji: '✈️' }, { citizen: '카페', wolf: '빵집', emoji: '☕' },
+                { citizen: '경찰서', wolf: '소방서', emoji: '🚓' }, { citizen: '박물관', wolf: '미술관', emoji: '🏛️' },
+                { citizen: '놀이공원', wolf: '워터파크', emoji: '🎢' }, { citizen: '헬스장', wolf: '수영장', emoji: '💪' },
+                { citizen: '편의점', wolf: '슈퍼마켓', emoji: '🏪' }, { citizen: '은행', wolf: '우체국', emoji: '🏦' },
+                { citizen: '방송국', wolf: '신문사', emoji: '📡' }, { citizen: '주유소', wolf: '충전소', emoji: '⛽' },
+                { citizen: '미용실', wolf: '이발소', emoji: '💇' }, { citizen: '호텔', wolf: '모텔', emoji: '🏨' },
+                { citizen: '아파트', wolf: '주택', emoji: '🏢' }, { citizen: '식당', wolf: '레스토랑', emoji: '🍴' },
+                { citizen: '지하철', wolf: '버스', emoji: '🚇' },{ citizen: '공원', wolf: '운동장', emoji: '🌳' },
+                { citizen: '교회', wolf: '성당', emoji: '⛪' }, { citizen: '절', wolf: '신사', emoji: '⛩️' },
+            ],
+            '물건': [
+                { citizen: '책상', wolf: '의자', emoji: '🪑' }, { citizen: '연필', wolf: '볼펜', emoji: '✏️' },
+                { citizen: '안경', wolf: '선글라스', emoji: '👓' }, { citizen: '시계', wolf: '달력', emoji: '⏰' },
+                { citizen: '가방', wolf: '지갑', emoji: '👜' }, { citizen: '우산', wolf: '양산', emoji: '☂️' },
+                { citizen: '컵', wolf: '텀블러', emoji: '🥤' }, { citizen: '숟가락', wolf: '젓가락', emoji: '🥢' },
+                { citizen: '신발', wolf: '양말', emoji: '👟' }, { citizen: '모자', wolf: '장갑', emoji: '🧢' },
+                { citizen: '반지', wolf: '목걸이', emoji: '💍' }, { citizen: '비누', wolf: '샴푸', emoji: '🧼' },
+                { citizen: '치약', wolf: '칫솔', emoji: '🪥' }, { citizen: '수건', wolf: '휴지', emoji: 'タオル' },
+                { citizen: '침대', wolf: '소파', emoji: '🛋️' }, { citizen: '빗', wolf: '거울', emoji: '🪞' },
+                { citizen: '휴지통', wolf: '분리수거함', emoji: '🗑️' }, { citizen: '열쇠', wolf: '자물쇠', emoji: '🔑' },
+                { citizen: '가위', wolf: '칼', emoji: '✂️' }, { citizen: '냄비', wolf: '프라이팬', emoji: '🍳' },
+                { citizen: '리모컨', wolf: '스마트키', emoji: '📺' },{ citizen: '마스크', wolf: '손소독제', emoji: '😷' },
+                { citizen: '국기', wolf: '지도', emoji: '🗺️' }, { citizen: '동전', wolf: '지폐', emoji: '💰' },
+            ],
+             'LOL 챔피언': [
+                { citizen: '가렌', wolf: '다리우스', emoji: '⚔️' }, { citizen: '럭스', wolf: '모르가나', emoji: '✨' },
+                { citizen: '야스오', wolf: '요네', emoji: '🌪️' }, { citizen: '애쉬', wolf: '바루스', emoji: '🏹' },
+                { citizen: '레오나', wolf: '노틸러스', emoji: '🛡️' }, { citizen: '케이틀린', wolf: '진', emoji: '🔫' },
+                { citizen: '이즈리얼', wolf: '카이사', emoji: '💥' }, { citizen: '쓰레쉬', wolf: '블리츠크랭크', emoji: '⛓️' },
+                { citizen: '제드', wolf: '탈론', emoji: '🔪' }, { citizen: '아리', wolf: '르블랑', emoji: '💖' },
+                { citizen: '리븐', wolf: '피오라', emoji: '🤺' }, { citizen: '말파이트', wolf: '오른', emoji: '🗿' },
+                { citizen: '마스터 이', wolf: '트린다미어', emoji: '🗡️' }, { citizen: '징크스', wolf: '트리스타나', emoji: '🚀' },
+                { citizen: '베인', wolf: '트위치', emoji: '🦇' }, { citizen: '리 신', wolf: '신 짜오', emoji: '👊' },
+                { citizen: '애니', wolf: '브랜드', emoji: '🔥' }, { citizen: '소라카', wolf: '소나', emoji: '🌟' },
+                { citizen: '룰루', wolf: '유미', emoji: '🐱' }, { citizen: '미스 포츈', wolf: '루시안', emoji: '🔫' },
+                { citizen: '베이가', wolf: '신드라', emoji: '🔮' }, { citizen: '카타리나', wolf: '아칼리', emoji: '🌪️' },
+                { citizen: '이렐리아', wolf: '카밀', emoji: '🔪' }, { citizen: '티모', wolf: '나르', emoji: '🍄' },
+                { citizen: '나서스', wolf: '레넥톤', emoji: '🐊' }, { citizen: '볼리베어', wolf: '우디르', emoji: '🐻' },
+                { citizen: '바이', wolf: '세트', emoji: '🥊' }, { citizen: '파이크', wolf: '세나', emoji: '⚓' },
+                { citizen: '자이라', wolf: '하이머딩거', emoji: '🌱' }, { citizen: '카사딘', wolf: '말자하', emoji: '🌌' },
+                { citizen: '블라디미르', wolf: '스웨인', emoji: '🩸' }, { citizen: '에코', wolf: '다이애나', emoji: '⌛' },
+                { citizen: '렝가', wolf: '카직스', emoji: '🦁' }, { citizen: '케인', wolf: '아트록스', emoji: '😈' },
+                { citizen: '쉔', wolf: '크산테', emoji: '🛡️' }, { citizen: '그레이브즈', wolf: '킨드레드', emoji: '🐺' },
+                { citizen: '오리아나', wolf: '직스', emoji: '💣' }, { citizen: '잔나', wolf: '나미', emoji: '🌊' },
+                { citizen: '트위스티드 페이트', wolf: '라이즈', emoji: '🃏' }, { citizen: '녹턴', wolf: '피들스틱', emoji: '👻' },
+                { citizen: '샤코', wolf: '이블린', emoji: '🤡' }, { citizen: '뽀삐', wolf: '자르반 4세', emoji: '🔨' },
+                { citizen: '모데카이저', wolf: '일라오이', emoji: '🐙' }, { citizen: '갱플랭크', wolf: '클레드', emoji: '🏴‍☠️' },
+                { citizen: '세라핀', wolf: '니코', emoji: '🦎' }, { citizen: '자야', wolf: '아펠리오스', emoji: '🌙' },
+                { citizen: '제리', wolf: '시비르', emoji: '⚡' }, { citizen: '벨베스', wolf: '비에고', emoji: '👑' },
+                { citizen: '자크', wolf: '아무무', emoji: '😭' }, { citizen: '그라가스', wolf: '세주아니', emoji: '🐗' },
+            ],
+            'LOL 아이템': [
+                { citizen: '무한의 대검', wolf: '나보리 신속검', emoji: '⚔️' }, { citizen: '라바돈의 죽음모자', wolf: '공허의 지팡이', emoji: '🎩' },
+                { citizen: '태양불꽃 방패', wolf: '강철심장', emoji: '❤️' }, { citizen: '강철의 솔라리 펜던트', wolf: '저녁갑주', emoji: '🛡️' },
+                { citizen: '리안드리의 고뇌', wolf: '루덴의 동반자', emoji: '🎭' }, { citizen: '몰락한 왕의 검', wolf: '크라켄 학살자', emoji: '🗡️' },
+                { citizen: '존야의 모래시계', wolf: '밴시의 장막', emoji: '⏳' }, { citizen: '수호 천사', wolf: '스테락의 도전', emoji: '👼' },
+                { citizen: '가시 갑옷', wolf: '란두인의 예언', emoji: '🛡️' }, { citizen: '대자연의 힘', wolf: '정령의 형상', emoji: '🌿' },
+                { citizen: '요우무의 유령검', wolf: '드락사르의 황혼검', emoji: '👻' }, { citizen: '칠흑의 양날 도끼', wolf: '세릴다의 원한', emoji: '❄️' },
+                { citizen: '워모그의 갑옷', wolf: '굳건한 심장', emoji: '💚' }, { citizen: '구원', wolf: '미카엘의 축복', emoji: '✨' },
+                { citizen: '폭풍 쇄도', wolf: '그림자불꽃', emoji: '🔥' }, { citizen: '불경한 히드라', wolf: '굶주린 히드라', emoji: '🐍' },
+                { citizen: '피바라기', wolf: '불멸의 철갑궁', emoji: '🩸' }, { citizen: '도미닉 경의 인사', wolf: '필멸자의 운명', emoji: '💀' },
+                { citizen: '우주의 추진력', wolf: '리치베인', emoji: '💫' }, { citizen: '모렐로노미콘', wolf: '화공 펑크 사슬검', emoji: '🧪' },
+                { citizen: '대천사의 지팡이', wolf: '영겁의 지팡이', emoji: '📜' }, { citizen: '얼어붙은 심장', wolf: '얼어붙은 건틀릿', emoji: '🧊' },
+                { citizen: '기사의 맹세', wolf: '지크의 융합', emoji: '🤝' }, { citizen: '라일라이의 수정홀', wolf: '악의', emoji: '🔮' },
+                { citizen: '마법사의 최후', wolf: '종말', emoji: '🔚' },
+            ]
+        };
 
-    //요소를 선택
-    var categoryButtons = document.querySelectorAll(".category-button");
-    var recommendButton = document.querySelector("#recommend-button");
-    var resultText = document.querySelector("#result-text");
+        const topics = ['음식', '직업', '전자제품', '동물', '스포츠', '장소', '물건', 'LOL 챔피언', 'LOL 아이템', 'Random'];
 
-    //선택된 카테고리를 저장 변수 선언
-    var selectedCategory = null;
+        // DOM Elements
+        const setupScreen = document.getElementById('setup-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const playerCountInput = document.getElementById('player-count');
+        const wolfCountInput = document.getElementById('wolf-count');
+        const topicContainer = document.getElementById('topic-container');
+        const startGameBtn = document.getElementById('start-game-btn');
+        const errorMessage = document.getElementById('error-message');
+        const playerButtons = document.getElementById('player-buttons');
+        const showResultBtn = document.getElementById('show-result-btn');
+        const wolfPlayersSpan = document.getElementById('wolf-players');
+        const citizenWordSpan = document.getElementById('citizen-word');
+        const wolfWordSpan = document.getElementById('wolf-word');
+        const restartGameBtn = document.getElementById('restart-game-btn');
+        const wordModal = document.getElementById('word-modal');
+        const modalWord = document.getElementById('modal-word');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        
+        let selectedTopic = '';
+        let roles = [];
+        let wordPair = {};
+        let checkedPlayers = 0;
+        let playerCount = 0;
 
-    //클릭 이벤트 리스너
-    categoryButtons.forEach(function(button) {
+        function initialize() {
+            // 주제 버튼 생성
+            topics.forEach(topic => {
+                const button = document.createElement('button');
+                button.textContent = topic;
+                button.className = 'topic-btn border border-gray-300 rounded-lg py-2 px-1 text-sm sm:text-base text-gray-700 hover:bg-gray-100 transition';
+                button.dataset.topic = topic;
+                topicContainer.appendChild(button);
+            });
+            
+            // 주제 버튼 클릭 이벤트
+            topicContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('topic-btn')) {
+                    document.querySelectorAll('.topic-btn').forEach(btn => btn.classList.remove('selected'));
+                    e.target.classList.add('selected');
+                    selectedTopic = e.target.dataset.topic;
+                }
+            });
 
-      button.addEventListener("click", function() {
-
-        //이전에 선택된 버튼 초기화.
-        if (selectedCategory) {
-
-          selectedCategory.classList.remove("selected");
-
+            startGameBtn.addEventListener('click', startGame);
+            showResultBtn.addEventListener('click', showResult);
+            restartGameBtn.addEventListener('click', restartGame);
+            closeModalBtn.addEventListener('click', () => wordModal.classList.add('hidden'));
+        }
+        
+        function validateSettings() {
+            const players = parseInt(playerCountInput.value);
+            const wolves = parseInt(wolfCountInput.value);
+            
+            if (!selectedTopic) {
+                errorMessage.textContent = '주제를 선택해주세요.';
+                return false;
+            }
+            if (wolves >= players) {
+                errorMessage.textContent = '라이어 수는 참가 인원보다 적어야 합니다.';
+                return false;
+            }
+            errorMessage.textContent = '';
+            return true;
         }
 
-        //선택된 버튼의 스타일을 변경
-        button.classList.add("selected");
+        function startGame() {
+            if (!validateSettings()) return;
 
-        selectedCategory = button;
+            playerCount = parseInt(playerCountInput.value);
+            const wolfCount = parseInt(wolfCountInput.value);
+            
+            // 단어 선택
+            let finalTopic = selectedTopic;
+            if (finalTopic === 'Random') {
+                const realTopics = topics.slice(0, -1);
+                finalTopic = realTopics[Math.floor(Math.random() * realTopics.length)];
+            }
+            const words = wordsData[finalTopic];
+            wordPair = words[Math.floor(Math.random() * words.length)];
 
-        //결과 초기화합니다.
-        resultText.textContent = "";
+            // 역할 분배
+            roles = Array(playerCount).fill('citizen');
+            let wolvesAssigned = 0;
+            while(wolvesAssigned < wolfCount) {
+                const randomIndex = Math.floor(Math.random() * playerCount);
+                if (roles[randomIndex] === 'citizen') {
+                    roles[randomIndex] = 'wolf';
+                    wolvesAssigned++;
+                }
+            }
 
-      });
-    });
+            // 게임 화면 설정
+            setupScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            resultScreen.classList.add('hidden');
+            
+            checkedPlayers = 0;
+            showResultBtn.disabled = true;
 
-    //추천받기 버튼에 클릭 이벤트 리스너 추가
-    recommendButton.addEventListener("click", function() {
+            playerButtons.innerHTML = '';
+            for (let i = 0; i < playerCount; i++) {
+                const button = document.createElement('button');
+                button.textContent = `${i + 1}번`;
+                button.dataset.index = i;
+                button.className = 'player-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-6 rounded-lg transition';
+                button.addEventListener('click', showWordModal);
+                playerButtons.appendChild(button);
+            }
+        }
 
-      //카테고리가 선택되지 않았으면 alert
-      if (!selectedCategory) {
+        function showWordModal(e) {
+            const playerIndex = parseInt(e.target.dataset.index);
+            const role = roles[playerIndex];
+            const word = role === 'wolf' ? wordPair.wolf : wordPair.citizen;
+            
+            modalWord.textContent = `${wordPair.emoji} ${word}`;
+            wordModal.classList.remove('hidden');
 
-        alert("카테고리를 선택해주세요.");
+            e.target.disabled = true;
+            e.target.classList.remove('bg-gray-200', 'hover:bg-gray-300');
+            e.target.classList.add('bg-indigo-500', 'text-white');
+            e.target.textContent = '확인 완료';
 
-        return;
-      }
+            checkedPlayers++;
+            if (checkedPlayers === playerCount) {
+                showResultBtn.disabled = false;
+            }
+        }
 
-      //선택된 카테고리의 이름
-      var categoryName = selectedCategory.textContent;
+        function showResult() {
+            const wolfIndices = roles.map((role, index) => role === 'wolf' ? index + 1 : null).filter(Boolean);
+            wolfPlayersSpan.textContent = wolfIndices.join(', ');
+            citizenWordSpan.textContent = `${wordPair.emoji} ${wordPair.citizen}`;
+            wolfWordSpan.textContent = `${wordPair.emoji} ${wordPair.wolf}`;
+            
+            gameScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+        }
 
-      //해당 카테고리의 음식 배열
-      var foods = categories[categoryName];
+        function restartGame() {
+            resultScreen.classList.add('hidden');
+            setupScreen.classList.remove('hidden');
+            
+            selectedTopic = '';
+            document.querySelectorAll('.topic-btn').forEach(btn => btn.classList.remove('selected'));
+            errorMessage.textContent = '';
+        }
 
-      //배열에서 랜덤하게 하나를 선택
-      var randomIndex = Math.floor(Math.random() * foods.length);
-
-      var randomFood = foods[randomIndex];
-
-      //결과 출력
-      resultText.textContent = categoryName + " 카테고리에서 " + randomFood + "을(를) 추천합니다.";
-
-    });
-
-  </script>
+        initialize();
+    </script>
 </body>
 </html>
+
