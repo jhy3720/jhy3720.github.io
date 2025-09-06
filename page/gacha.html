@@ -24,6 +24,11 @@
         input[type="number"] {
             -moz-appearance: textfield;
         }
+        /* [수정] iPhone(iOS)에서 입력 필드 터치 시 자동 확대되는 현상 방지 */
+        input[type="text"],
+        input[type="number"] {
+            font-size: 16px;
+        }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
@@ -234,5 +239,4 @@
     </script>
 </body>
 </html>
-
 
