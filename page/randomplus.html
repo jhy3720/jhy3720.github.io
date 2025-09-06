@@ -96,7 +96,7 @@
                  <p id="overall-probability" class="text-xl font-bold text-gray-800">-</p>
             </div>
             
-            <!-- [추가됨] 초기화 버튼 -->
+            <!-- 초기화 버튼 -->
             <button id="reset-btn" class="mt-4 w-full bg-gray-500 text-white font-semibold py-3 px-4 rounded-lg hover:bg-gray-600 transition-transform transform hover:-translate-y-0.5 duration-300">
                 초기화
             </button>
@@ -119,7 +119,7 @@
         const failureCountEl = document.getElementById('failure-count');
         const overallProbabilityEl = document.getElementById('overall-probability');
         const notification = document.getElementById('notification');
-        const resetBtn = document.getElementById('reset-btn'); // [추가됨]
+        const resetBtn = document.getElementById('reset-btn');
 
         // 유효성 검사 함수
         function validateInput(value, min, max, name) {
@@ -135,7 +135,7 @@
 
         // 단일 시뮬레이션 이벤트 리스너
         singleTrialBtn.addEventListener('click', () => {
-            const prob = validateInput(probabilityInput.value, 0.000001, 100, '확률');
+            const prob = validateInput(probabilityInput.value, 0.00000001, 100, '확률');
             if (prob === null) return;
 
             const random = Math.random() * 100;
@@ -144,7 +144,7 @@
             // 애니메이션을 다시 트리거하기 위한 트릭
             void singleResult.offsetWidth;
 
-            // [수정됨] 성공/실패 카운터 업데이트
+            // 성공/실패 카운터 업데이트
             let currentSuccess = parseInt(successCountEl.textContent.replace(/,/g, '')) || 0;
             let currentFailure = parseInt(failureCountEl.textContent.replace(/,/g, '')) || 0;
 
@@ -161,10 +161,10 @@
 
         // 다중 시뮬레이션 이벤트 리스너
         multipleTrialsBtn.addEventListener('click', () => {
-            const prob = validateInput(probabilityInput.value, 0.000001, 100, '확률');
+            const prob = validateInput(probabilityInput.value, 0.00000001, 100, '확률');
             if (prob === null) return;
             
-            const trials = validateInput(trialsInput.value, 1, 1000000, '시도 횟수');
+            const trials = validateInput(trialsInput.value, 1, 10000000000, '시도 횟수');
             if (trials === null) return;
             
             let success = 0;
@@ -174,8 +174,12 @@
                 }
             }
             
-            successCountEl.textContent = success.toLocaleString();
-            failureCountEl.textContent = (trials - success).toLocaleString();
+            // 현재 횟수를 가져와서 새로운 결과를 더합니다.
+            let currentSuccess = parseInt(successCountEl.textContent.replace(/,/g, '')) || 0;
+            let currentFailure = parseInt(failureCountEl.textContent.replace(/,/g, '')) || 0;
+
+            successCountEl.textContent = (currentSuccess + success).toLocaleString();
+            failureCountEl.textContent = (currentFailure + trials - success).toLocaleString();
         });
 
         // '한번이라도 당첨될 확률' 실시간 계산
@@ -196,7 +200,7 @@
             overallProbabilityEl.textContent = `${percentage}%`;
         }
         
-        // [추가됨] 초기화 함수
+        // 초기화 함수
         function resetAll() {
             probabilityInput.value = '';
             trialsInput.value = '';
@@ -210,7 +214,7 @@
         // 입력값이 변경될 때마다 계산 함수 호출
         probabilityInput.addEventListener('input', calculateOverallProbability);
         trialsInput.addEventListener('input', calculateOverallProbability);
-        resetBtn.addEventListener('click', resetAll); // [추가됨]
+        resetBtn.addEventListener('click', resetAll);
 
     </script>
 </body>
