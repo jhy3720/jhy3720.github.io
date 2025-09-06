@@ -1,188 +1,208 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>뽑기 웹 사이트</title>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>뽑기 웹 사이트</title>
+    <!-- Tailwind CSS를 사용하여 현대적인 디자인을 적용합니다. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Noto Sans KR 웹폰트를 불러옵니다. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* 기본 폰트를 Noto Sans KR로 설정합니다. */
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        /* 입력 필드 화살표 숨기기 */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+    </style>
 </head>
-
-<body>
-
-  <h1>뽑기 웹 사이트</h1>
-
-  <p>상품명과 확률을 입력하고 시작하기 버튼을 눌러보세요.</p>
-
-  <div id="inputs" style="display: flex; flex-direction: column;">
-
-    <input type="text" id="item1" placeholder="상품명">
-
-    <input type="number" id="prob1" placeholder="확률(%)">
-
-    <button id="add">선택지 추가</button>
-
-    <button id="start">시작하기</button>
-
-  </div>
-
-  <div id="results" style="display: none;">
-
-    <p>입력한 상품과 확률은 다음과 같습니다.</p>
-
-    <ul id="list"></ul>
-
-    <button id="draw">추첨하기</button>
-
-  </div>
-
-  <script>
-
-    //선택지 추가 버튼을 누르면 새로운 입력창을 생성하는 함수
-    function addInput() {
-
-      //입력창의 개수를 세는 변수
-      let count = document.querySelectorAll("input[type=text]").length;
-
-      //새로운 입력창을 만드는 코드
-      let newItem = document.createElement("input");
-      newItem.type = "text";
-      newItem.id = "item" + (count + 1);
-      newItem.placeholder = "상품명";
-
-      let newProb = document.createElement("input");
-      newProb.type = "number";
-      newProb.id = "prob" + (count + 1);
-      newProb.placeholder = "확률(%)";
-
-      //입력창을 화면에 추가하는 코드
-      let inputs = document.getElementById("inputs");
-
-      inputs.insertBefore(newItem, document.getElementById("add"));
-      inputs.insertBefore(newProb, document.getElementById("add"));
-
-    }
-
-    //시작하기 버튼을 누르면 입력한 확률의 합이 100%인지 확인하는 함수
-    function checkProb() {
-
-      //입력창의 개수를 세는 변수
-      let count = document.querySelectorAll("input[type=text]").length;
-
-      //입력한 확률의 합을 저장하는 변수
-      let sum = 0;
-
-      for (let i = 1; i <= count; i++) {
-
-        sum += Number(document.getElementById("prob" + i).value);
-
-      }
-
-      //확률의 합이 100% 미만이면 alert를 보내고 리스트를 보여주지 않는 코드
-      if (sum < 100) {
-
-        alert("확률이 100% 미만입니다. 확률을 다시 입력해주세요.");
-        return; // 함수를 종료
-
-      }
-
-      //확률의 합이 100% 이상이면 alert를 보내고 리스트를 보여주지 않는 코드
-
-      if (sum > 100) {
-
-        alert("확률이 100% 이상입니다. 확률을 다시 입력해주세요.");
-        return; // 함수를 종료
-
-      }
-
-      //확률의 합이 100%이면 리스트를 보여주는 코드
-      showList();
-
-    }
-
-    //시작하기 버튼을 누르면 입력한 상품과 확률을 리스트로 보여주는 함수
-    function showList() {
-
-      //입력창의 개수를 세는 변수
-      let count = document.querySelectorAll("input[type=text]").length;
-
-      //입력한 상품과 확률을 배열로 저장하는 코드
-      let items = [];
-      let probs = [];
-
-      for (let i = 1; i <= count; i++) {
-
-        items.push(document.getElementById("item" + i).value);
-        probs.push(document.getElementById("prob" + i).value);
-
-      }
-
-      //리스트를 만들고 화면에 보여주는 코드
-      let list = document.getElementById("list");
-
-      for (let i = 0; i < count; i++) {
-
-        let li = document.createElement("li");
-
-        li.textContent = items[i] + ": " + probs[i] + "%";
-
-        list.appendChild(li);
-
-      }
-
-      //입력창을 숨기고 결과창을 보여주는 코드
-      document.getElementById("inputs").style.display = "none";
-      document.getElementById("results").style.display = "block";
-
-    }
-
-    //추첨하기 버튼을 누르면 확률에 따라 랜덤하게 상품을 선택하고 alert로 보여주는 함수
-    function drawItem() {
-
-      //입력창의 개수를 세는 변수
-      let count = document.querySelectorAll("input[type=text]").length;
-
-      //입력한 상품과 확률을 배열로 저장하는 코드
-      let items = [];
-      let probs = [];
-
-      for (let i = 1; i <= count; i++) {
-
-        items.push(document.getElementById("item" + i).value);
-
-        probs.push(document.getElementById("prob" + i).value);
-
-      }
-
-      //확률에 따라 랜덤하게 상품을 선택하는 코드
-      let random = Math.random() * 100; //0부터 100 사이의 랜덤한 숫자
-      let sum = 0; //확률의 누적합을 저장하는 변수
-      let result = ""; //선택된 상품을 저장하는 변수
-
-      for (let i = 0; i < count; i++) {
-
-        sum += Number(probs[i]); //확률을 더해줌
-
-        if (random < sum) { //랜덤한 숫자가 누적합보다 작으면
-
-          result = items[i]; //해당 상품을 선택
-
-          break; //반복문을 종료
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-lg mx-auto bg-white rounded-xl shadow-lg p-8 transition-all duration-500">
+
+        <!-- 입력 섹션 -->
+        <div id="inputs-section">
+            <div class="text-center mb-6">
+                <h1 class="text-3xl font-bold text-gray-800">뽑기 웹 사이트 🎲</h1>
+                <p class="text-gray-500 mt-2">상품명과 확률을 입력하고 시작해 보세요.</p>
+            </div>
+
+            <div id="items-container" class="space-y-3 mb-4">
+                <!-- 초기 입력 필드 -->
+                <div class="item-input-group flex gap-3">
+                    <input type="text" placeholder="상품명" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                    <input type="number" placeholder="확률(%)" class="w-28 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                </div>
+            </div>
+
+            <!-- 버튼 그룹 -->
+            <div class="flex gap-3 mb-4">
+                <button id="add-item" class="w-full bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-lg hover:bg-gray-300 transition-transform transform hover:-translate-y-0.5 duration-300">
+                    항목 추가
+                </button>
+                <button id="start-draw" class="w-full bg-blue-500 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:bg-blue-600 transition-transform transform hover:-translate-y-0.5 duration-300">
+                    시작하기
+                </button>
+            </div>
+            
+            <!-- 알림 메시지 영역 -->
+            <div id="notification" class="text-center text-red-500 font-semibold h-6"></div>
+        </div>
+
+        <!-- 결과 섹션 -->
+        <div id="results-section" style="display: none;">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">입력된 항목 및 확률</h2>
+                <p class="text-gray-500 mt-1">아래 '추첨하기' 버튼을 눌러주세요.</p>
+            </div>
+            
+            <ul id="item-list" class="mb-6 bg-gray-50 p-4 rounded-lg space-y-2"></ul>
+
+            <div id="result-display" class="text-center my-8 h-16">
+                 <!-- 추첨 결과가 여기에 표시됩니다. -->
+            </div>
+
+            <div class="flex gap-3">
+                <button id="draw-now" class="w-full bg-green-500 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:bg-green-600 transition-transform transform hover:-translate-y-0.5 duration-300">
+                    추첨하기
+                </button>
+                <button id="reset" class="w-full bg-gray-500 text-white font-semibold py-3 px-4 rounded-lg hover:bg-gray-600 transition-transform transform hover:-translate-y-0.5 duration-300">
+                    다시하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const itemsContainer = document.getElementById('items-container');
+        const addItemBtn = document.getElementById('add-item');
+        const startDrawBtn = document.getElementById('start-draw');
+        const drawNowBtn = document.getElementById('draw-now');
+        const resetBtn = document.getElementById('reset');
+
+        const inputsSection = document.getElementById('inputs-section');
+        const resultsSection = document.getElementById('results-section');
+        const notification = document.getElementById('notification');
+        const itemList = document.getElementById('item-list');
+        const resultDisplay = document.getElementById('result-display');
+        
+        let gachaItems = [];
+
+        // 항목 추가 기능
+        addItemBtn.addEventListener('click', () => {
+            const newInputs = document.createElement('div');
+            newInputs.className = 'item-input-group flex gap-3';
+            newInputs.innerHTML = `
+                <input type="text" placeholder="상품명" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                <input type="number" placeholder="확률(%)" class="w-28 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+            `;
+            itemsContainer.appendChild(newInputs);
+        });
+
+        // 시작하기 기능 (유효성 검사 및 데이터 저장)
+        startDrawBtn.addEventListener('click', () => {
+            notification.textContent = '';
+            gachaItems = [];
+            let totalProb = 0;
+            const itemGroups = document.querySelectorAll('.item-input-group');
+
+            for (const group of itemGroups) {
+                const name = group.children[0].value.trim();
+                const prob = parseFloat(group.children[1].value);
+
+                if (!name) {
+                    notification.textContent = '상품명이 비어있습니다.';
+                    return;
+                }
+                if (isNaN(prob) || prob <= 0) {
+                    notification.textContent = `'${name}'의 확률을 올바르게 입력해주세요.`;
+                    return;
+                }
+                gachaItems.push({ name, prob });
+                totalProb += prob;
+            }
+
+            if (gachaItems.length === 0) {
+                notification.textContent = '항목을 하나 이상 추가해주세요.';
+                return;
+            }
+            if (Math.abs(totalProb - 100.0) > 0.001) { // 부동소수점 오차를 고려
+                notification.textContent = `확률의 총합이 100%가 아닙니다. (현재: ${totalProb}%)`;
+                return;
+            }
+            
+            showResultsView();
+        });
+
+        // 결과 화면 표시
+        function showResultsView() {
+            itemList.innerHTML = '';
+            gachaItems.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'flex justify-between items-center text-gray-700';
+                li.innerHTML = `<span>${item.name}</span><span class="font-bold">${item.prob}%</span>`;
+                itemList.appendChild(li);
+            });
+            
+            inputsSection.style.display = 'none';
+            resultsSection.style.display = 'block';
+            resultDisplay.innerHTML = '';
+            drawNowBtn.disabled = false;
+            drawNowBtn.classList.replace('bg-gray-400', 'bg-green-500');
+            drawNowBtn.classList.add('hover:bg-green-600');
 
         }
 
-      }
+        // 추첨 기능
+        drawNowBtn.addEventListener('click', () => {
+            const random = Math.random() * 100;
+            let cumulativeProb = 0;
+            let winner = null;
 
-      //결과를 보여주는 코드
-      alert("축하합니다! " + result + "을(를) 뽑으셨습니다!");
+            for (const item of gachaItems) {
+                cumulativeProb += item.prob;
+                if (random < cumulativeProb) {
+                    winner = item;
+                    break;
+                }
+            }
+            
+            if(winner) {
+                resultDisplay.innerHTML = `
+                    <p class="text-lg text-gray-600">🎉 축하합니다! 🎉</p>
+                    <p class="text-3xl font-bold text-green-600 animate-pulse">${winner.name}</p>
+                    <p class="text-lg text-gray-600">에 당첨되셨습니다!</p>
+                `;
+            }
 
-    }
+            drawNowBtn.disabled = true;
+            drawNowBtn.classList.replace('bg-green-500', 'bg-gray-400');
+            drawNowBtn.classList.remove('hover:bg-green-600');
+        });
 
-    //버튼에 이벤트 리스너를 추가하는 코드
-    document.getElementById("add").addEventListener("click", addInput);
-    document.getElementById("start").addEventListener("click", checkProb);
-    document.getElementById("draw").addEventListener("click", drawItem);
+        // 다시하기 기능
+        resetBtn.addEventListener('click', () => {
+            inputsSection.style.display = 'block';
+            resultsSection.style.display = 'none';
+            notification.textContent = '';
+            itemsContainer.innerHTML = `
+                <div class="item-input-group flex gap-3">
+                    <input type="text" placeholder="상품명" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                    <input type="number" placeholder="확률(%)" class="w-28 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                </div>
+            `;
+        });
+    </script>
+</body>
+</html>
 
-  </script>
-
-</body></html>
