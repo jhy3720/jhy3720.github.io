@@ -1,83 +1,132 @@
-<html>
+<!DOCTYPE html>
+<html lang="ko">
 <head>
-  
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <style>
-
-    button {
-
-      font-size: 20px;
-
-      padding: 10px;
-
-    }
-
-    p {
-
-      font-size: 30px;
-
-      color: blue;
-
-    }
-
-  </style>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로또 번호 생성기</title>
+    <!-- Tailwind CSS를 사용하여 현대적인 디자인을 적용합니다. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Noto Sans KR 웹폰트를 불러옵니다. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* 기본 폰트를 Noto Sans KR로 설정합니다. */
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+    </style>
 </head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
 
-<body>
-  <button id="btn">번호 생성</button>
+    <div class="w-full max-w-md mx-auto bg-white rounded-xl shadow-lg p-8">
 
-  <p id="result"></p>
+        <div class="text-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">로또 번호 생성기 🍀</h1>
+            <p class="text-gray-500 mt-2">행운의 번호를 생성해 보세요!</p>
+        </div>
 
-  <script>
+        <!-- 번호가 표시될 영역 -->
+        <div id="result" class="flex justify-center items-center space-x-2 h-20 mb-6 bg-gray-50 rounded-lg">
+             <p class="text-gray-400">버튼을 눌러 번호를 생성하세요.</p>
+        </div>
 
-    // 버튼 요소를 찾는다
-    var btn = document.getElementById("btn");
+        <!-- 번호 생성 버튼 -->
+        <button id="generate-btn" class="w-full bg-blue-500 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-blue-600 transition-transform transform hover:-translate-y-0.5 duration-300 mb-8">
+            번호 생성
+        </button>
 
-    // 결과를 표시할 요소를 찾는다
-    var result = document.getElementById("result");
+        <!-- 생성 기록 섹션 -->
+        <div class="border-t pt-6">
+            <div class="flex justify-between items-center mb-4">
+                 <h2 class="text-xl font-semibold text-gray-700">생성 기록</h2>
+                 <button id="clear-history-btn" class="text-sm text-gray-500 hover:text-red-500 transition duration-300">기록 지우기</button>
+            </div>
+           
+            <ul id="history-list" class="space-y-3 max-h-48 overflow-y-auto pr-2">
+                <!-- 기록이 여기에 추가됩니다. -->
+                <li class="text-center text-gray-400">아직 생성된 번호가 없습니다.</li>
+            </ul>
+        </div>
 
-    // 버튼을 클릭하면 함수를 실행한다
-    btn.addEventListener("click", function() {
+    </div>
 
-      // 1에서 45사이의 숫자 6개를 저장할 배열을 만든다
-      var numbers = [];
+    <script>
+        const generateBtn = document.getElementById('generate-btn');
+        const clearHistoryBtn = document.getElementById('clear-history-btn');
+        const resultDiv = document.getElementById('result');
+        const historyList = document.getElementById('history-list');
 
-      // 6번 반복한다
-      for (var i = 0; i < 6; i++) {
+        let history = [];
 
-        // 1에서 45사이의 랜덤한 정수를 생성한다
-        var num = Math.floor(Math.random() * 45) + 1;
-
-        // 배열에 이미 같은 숫자가 있는지 확인한다
-        if (numbers.includes(num)) {
-
-          // 있으면 i를 하나 감소시키고 다시 반복한다
-          i--;
-
-        } else {
-
-          // 없으면 배열에 추가한다
-          numbers.push(num);
-
+        // 로또 번호 색상 구분을 위한 함수
+        function getNumberColor(num) {
+            if (num <= 10) return 'bg-yellow-400';
+            if (num <= 20) return 'bg-blue-500';
+            if (num <= 30) return 'bg-red-500';
+            if (num <= 40) return 'bg-gray-600';
+            return 'bg-green-500';
         }
 
-      }
+        // 번호들을 화면에 표시하는 함수
+        function displayNumbers(numbers, element) {
+            element.innerHTML = ''; // 기존 내용 삭제
+            numbers.forEach(num => {
+                const colorClass = getNumberColor(num);
+                const numberCircle = document.createElement('div');
+                numberCircle.className = `w-10 h-10 flex items-center justify-center rounded-full text-white font-bold text-lg shadow-md ${colorClass}`;
+                numberCircle.textContent = num;
+                element.appendChild(numberCircle);
+            });
+        }
 
-      // 배열을 오름차순으로 정렬한다
-      numbers.sort(function(a, b) {
+        // 기록 목록을 업데이트하는 함수
+        function updateHistory() {
+            historyList.innerHTML = '';
+            if (history.length === 0) {
+                 historyList.innerHTML = '<li class="text-center text-gray-400">아직 생성된 번호가 없습니다.</li>';
+                 return;
+            }
+            // 최신 기록이 위로 오도록 배열을 복사해서 뒤집음
+            [...history].reverse().forEach(numbers => {
+                const li = document.createElement('li');
+                li.className = 'flex justify-center items-center space-x-2 p-2 bg-gray-50 rounded-md';
+                // 기록에는 작은 원으로 표시
+                numbers.forEach(num => {
+                    const colorClass = getNumberColor(num);
+                    const numberCircle = document.createElement('div');
+                    numberCircle.className = `w-7 h-7 flex items-center justify-center rounded-full text-white font-semibold text-sm ${colorClass}`;
+                    numberCircle.textContent = num;
+                    li.appendChild(numberCircle);
+                });
+                historyList.appendChild(li);
+            });
+        }
 
-        return a - b;
+        // 번호 생성 버튼 클릭 이벤트
+        generateBtn.addEventListener('click', () => {
+            let numbers = [];
+            while (numbers.length < 6) {
+                let num = Math.floor(Math.random() * 45) + 1;
+                if (!numbers.includes(num)) {
+                    numbers.push(num);
+                }
+            }
+            numbers.sort((a, b) => a - b);
+            
+            displayNumbers(numbers, resultDiv);
+            history.push(numbers);
+            updateHistory();
+        });
+        
+        // 기록 지우기 버튼 클릭 이벤트
+        clearHistoryBtn.addEventListener('click', () => {
+            history = [];
+            updateHistory();
+        });
 
-      });
-
-      // 배열을 문자열로 변환하고 결과 요소에 표시한다
-      result.textContent = numbers.join(", ");
-
-    });
-  </script>
+    </script>
 
 </body>
 </html>
+
