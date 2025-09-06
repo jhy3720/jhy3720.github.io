@@ -3,27 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>잡동사니 모음</title>
-
+    <!-- Tailwind CSS를 사용하여 현대적인 디자인을 적용합니다. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Noto Sans KR 웹폰트를 불러옵니다. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* 기본 폰트를 Noto Sans KR로 설정합니다. */
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+    </style>
 </head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
 
-<body>
-
-    <h1>개발 목록</h3>
+    <!-- 메인 콘텐츠 카드 -->
+    <div class="w-full max-w-md mx-auto bg-white rounded-xl shadow-lg p-8">
         
-        <li> 목록 </li>
+        <!-- 제목 섹션 -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">잡동사니 모음 ✨</h1>
+            <p class="text-gray-500 mt-2">재미로 만든 작은 웹페이지 목록입니다.</p>
+        </div>
+        
+        <!-- 링크 목록 -->
+        <div class="space-y-4">
+            <a href="https://jhy3720.github.io/page/lottery.html" 
+               class="block w-full bg-blue-500 text-white text-center font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-blue-600 transition-transform transform hover:-translate-y-1 duration-300 ease-in-out">
+                로또 번호 생성
+            </a>
 
-        <ol>
+            <a href="https://jhy3720.github.io/page/randomplus.html" 
+               class="block w-full bg-green-500 text-white text-center font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-green-600 transition-transform transform hover:-translate-y-1 duration-300 ease-in-out">
+                강화 확률 시뮬레이션
+            </a>
 
-        <li><a href=https://jhy3720.github.io/page/lottery.html> 로또 번호 생성</a></li>
+            <a href="https://jhy3720.github.io/page/recommand.html" 
+               class="block w-full bg-yellow-500 text-white text-center font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-yellow-600 transition-transform transform hover:-translate-y-1 duration-300 ease-in-out">
+                음식 추천
+            </a>
 
-        <li><a href=https://jhy3720.github.io/page/randomplus.html> 강화 확률 시뮬레이션</a></li>
+            <a href="https://jhy3720.github.io/page/gacha.html" 
+               class="block w-full bg-purple-500 text-white text-center font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-purple-600 transition-transform transform hover:-translate-y-1 duration-300 ease-in-out">
+                랜덤 뽑기
+            </a>
+        </div>
+    </div>
 
-        <li><a href=https://jhy3720.github.io/page/recommand.html> 음식 추천</a></li>
- 
-        <li><a href=https://jhy3720.github.io/page/gacha.html> 랜덤 뽑기</a></li>
-
-        </ol>
-
-</body></html>
+</body>
+</html>
