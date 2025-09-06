@@ -39,9 +39,14 @@
 
             <div id="items-container" class="space-y-3 mb-4">
                 <!-- 초기 입력 필드 -->
-                <div class="item-input-group flex gap-3">
+                <div class="item-input-group flex items-center gap-3">
                     <input type="text" placeholder="상품명" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
                     <input type="number" placeholder="확률(%)" class="w-28 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                    <button class="delete-item p-2 text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="pointer-events: none;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
                 </div>
             </div>
 
@@ -101,12 +106,30 @@
         // 항목 추가 기능
         addItemBtn.addEventListener('click', () => {
             const newInputs = document.createElement('div');
-            newInputs.className = 'item-input-group flex gap-3';
+            newInputs.className = 'item-input-group flex items-center gap-3';
             newInputs.innerHTML = `
                 <input type="text" placeholder="상품명" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
                 <input type="number" placeholder="확률(%)" class="w-28 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                <button class="delete-item p-2 text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="pointer-events: none;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
             `;
             itemsContainer.appendChild(newInputs);
+        });
+
+        // 항목 삭제 기능 (이벤트 위임)
+        itemsContainer.addEventListener('click', (e) => {
+            const deleteBtn = e.target.closest('.delete-item');
+            if (deleteBtn) {
+                if (itemsContainer.children.length > 1) {
+                    deleteBtn.parentElement.remove();
+                } else {
+                    notification.textContent = '마지막 항목은 삭제할 수 없습니다.';
+                    setTimeout(() => { notification.textContent = ''; }, 2000);
+                }
+            }
         });
 
         // 시작하기 기능 (유효성 검사 및 데이터 저장)
@@ -196,9 +219,14 @@
             resultsSection.style.display = 'none';
             notification.textContent = '';
             itemsContainer.innerHTML = `
-                <div class="item-input-group flex gap-3">
+                <div class="item-input-group flex items-center gap-3">
                     <input type="text" placeholder="상품명" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
                     <input type="number" placeholder="확률(%)" class="w-28 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                    <button class="delete-item p-2 text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="pointer-events: none;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
                 </div>
             `;
         });
