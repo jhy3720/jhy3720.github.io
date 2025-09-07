@@ -24,7 +24,7 @@
         input[type="number"] {
             -moz-appearance: textfield;
         }
-        /* [수정] iPhone(iOS)에서 입력 필드 터치 시 자동 확대되는 현상 방지 */
+        /* iPhone(iOS)에서 입력 필드 터치 시 자동 확대되는 현상 방지 */
         input[type="text"],
         input[type="number"] {
             font-size: 16px;
@@ -33,20 +33,23 @@
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
 
-    <div class="w-full max-w-lg mx-auto bg-white rounded-xl shadow-lg p-8 transition-all duration-500">
+    <!-- [수정] 모바일 화면을 고려하여 좌우 패딩(p-8 -> p-6)을 조정하고, sm 이상 화면에서 원래 패딩(sm:p-8)을 유지합니다. -->
+    <div class="w-full max-w-lg mx-auto bg-white rounded-xl shadow-lg p-6 sm:p-8 transition-all duration-500">
 
         <!-- 입력 섹션 -->
         <div id="inputs-section">
             <div class="text-center mb-6">
-                <h1 class="text-3xl font-bold text-gray-800">뽑기 웹 사이트 🎲</h1>
+                <!-- [수정] 모바일 화면에서 제목이 너무 크지 않도록 기본 크기를 줄이고(text-3xl -> text-2xl), sm 이상에서 원래 크기(sm:text-3xl)를 유지합니다. -->
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">뽑기 웹 사이트 🎲</h1>
                 <p class="text-gray-500 mt-2">상품명과 확률을 입력하고 시작해 보세요.</p>
             </div>
 
             <div id="items-container" class="space-y-3 mb-4">
                 <!-- 초기 입력 필드 -->
-                <div class="item-input-group flex items-center gap-3">
+                <!-- [수정] 자식 요소간의 간격(gap-3 -> gap-2)을 줄이고, 확률 입력 필드의 고정 너비(w-28 -> w-24)를 줄여 작은 화면에서도 깨지지 않게 합니다. -->
+                <div class="item-input-group flex items-center gap-2">
                     <input type="text" placeholder="상품명" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
-                    <input type="number" placeholder="확률(%)" class="w-28 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                    <input type="number" placeholder="확률(%)" class="w-24 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
                     <button class="delete-item p-2 text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100 transition">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="pointer-events: none;">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -56,7 +59,8 @@
             </div>
 
             <!-- 버튼 그룹 -->
-            <div class="flex gap-3 mb-4">
+            <!-- [수정] 모바일에서는 버튼을 세로로 쌓고(flex-col), sm 이상 화면에서는 가로로 배열(sm:flex-row)하여 레이아웃 깨짐을 방지합니다. -->
+            <div class="flex flex-col sm:flex-row gap-3 mb-4">
                 <button id="add-item" class="w-full bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-lg hover:bg-gray-300 transition-transform transform hover:-translate-y-0.5 duration-300">
                     항목 추가
                 </button>
@@ -82,7 +86,8 @@
                  <!-- 추첨 결과가 여기에 표시됩니다. -->
             </div>
 
-            <div class="flex gap-3">
+            <!-- [수정] 모바일에서는 버튼을 세로로 쌓고(flex-col), sm 이상 화면에서는 가로로 배열(sm:flex-row)하여 레이아웃 깨짐을 방지합니다. -->
+            <div class="flex flex-col sm:flex-row gap-3">
                 <button id="draw-now" class="w-full bg-green-500 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:bg-green-600 transition-transform transform hover:-translate-y-0.5 duration-300">
                     추첨하기
                 </button>
@@ -111,10 +116,12 @@
         // 항목 추가 기능
         addItemBtn.addEventListener('click', () => {
             const newInputs = document.createElement('div');
-            newInputs.className = 'item-input-group flex items-center gap-3';
+            // [수정] 동적으로 추가되는 항목도 수정된 클래스를 적용합니다. (gap-3 -> gap-2)
+            newInputs.className = 'item-input-group flex items-center gap-2';
             newInputs.innerHTML = `
                 <input type="text" placeholder="상품명" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
-                <input type="number" placeholder="확률(%)" class="w-28 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                <!-- [수정] 동적으로 추가되는 항목도 수정된 클래스를 적용합니다. (w-28 -> w-24) -->
+                <input type="number" placeholder="확률(%)" class="w-24 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
                 <button class="delete-item p-2 text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100 transition">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="pointer-events: none;">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -165,7 +172,7 @@
                 return;
             }
             if (Math.abs(totalProb - 100.0) > 0.001) { // 부동소수점 오차를 고려
-                notification.textContent = `확률의 총합이 100%가 아닙니다. (현재: ${totalProb}%)`;
+                notification.textContent = `확률의 총합이 100%가 아닙니다. (현재: ${totalProb.toFixed(2)}%)`;
                 return;
             }
             
@@ -212,11 +219,6 @@
                     <p class="text-lg text-gray-600">에 당첨되셨습니다!</p>
                 `;
             }
-
-            // 아래 코드를 제거하여 버튼을 계속 활성화 상태로 둡니다.
-            // drawNowBtn.disabled = true;
-            // drawNowBtn.classList.replace('bg-green-500', 'bg-gray-400');
-            // drawNowBtn.classList.remove('hover:bg-green-600');
         });
 
         // 다시하기 기능
@@ -224,10 +226,11 @@
             inputsSection.style.display = 'block';
             resultsSection.style.display = 'none';
             notification.textContent = '';
+            // [수정] 다시하기 시 생성되는 초기 항목도 수정된 클래스를 적용합니다.
             itemsContainer.innerHTML = `
-                <div class="item-input-group flex items-center gap-3">
+                <div class="item-input-group flex items-center gap-2">
                     <input type="text" placeholder="상품명" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
-                    <input type="number" placeholder="확률(%)" class="w-28 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                    <input type="number" placeholder="확률(%)" class="w-24 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
                     <button class="delete-item p-2 text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100 transition">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="pointer-events: none;">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -239,4 +242,3 @@
     </script>
 </body>
 </html>
-
