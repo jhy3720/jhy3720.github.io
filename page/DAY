@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>100 Dayz - Prototype</title>
+    <style>
+        body { background-color: #222; color: white; text-align: center; font-family: sans-serif; margin: 0; overflow: hidden; }
+        canvas { background-color: #333; border: 2px solid #555; display: block; margin: 20px auto; }
+        #ui { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 800px; display: flex; justify-content: space-between; pointer-events: none; }
+        .stat { background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 5px; }
+        #controls { margin-top: 10px; font-size: 14px; color: #aaa; }
+        #msg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 40px; color: red; font-weight: bold; display: none; text-shadow: 2px 2px 2px black; }
+        button { pointer-events: auto; cursor: pointer; padding: 5px 10px; background: #d32f2f; color: white; border: none; font-weight: bold; }
+        button:hover { background: #b71c1c; }
+    </style>
+</head>
+<body>
+
+    <div id="ui">
+        <div class="stat">📅 Day: <span id="dayCnt">1</span></div>
+        <div class="stat">☀️ Time: <span id="timeState">낮 (파밍)</span></div>
+        <div class="stat">🪵 자원: <span id="wood">0</span></div>
+        <div class="stat">❤️ 체력: <span id="hp">100</span></div>
+        <div class="stat">⚠️ 지역 위험도: <span id="threat">1</span> (체류 <span id="stayDays">1</span>일차)</div>
+        <button onclick="moveLocation()">🚚 다른 지역으로 이동 (위험도 초기화)</button>
+    </div>
+
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="msg">GAME OVER</div>
+    
+    <div id="controls">
+        [W,A,S,D] 이동 | [마우스 클릭] 공격/채집 | [B] 바리케이드 건설 (자원 10 소모) | [M] 지역 이동
+    </div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // 게임 상태 변수
+    let gameActive = true;
+    let day = 1;
+    let isNight = false;
+    let timeTimer = 0;
+    const dayDuration = 1000; // 낮 지속 시간 (프레임)
+    const nightDuration = 800; // 밤 지속 시간
+    
+    // 플레이어
+    const player = { x: 400, y: 300, size: 20, speed: 4, hp: 100, wood: 0, color: '#4CAF50' };
+    
+    // 오브젝트 배열
+    let zombies = [];
+    let resources = [];
+    let barricades = [];
+    let bullets = [];
+
+    // 핵심 기믹: 정착 패널티
+    let locationStayDays = 1; // 한 곳에 머문 날짜
+    let threatLevel = 1;      // 위험도 (좀비 스폰율/체력에 영향)
+
+    // 입력 처리
+    const keys = {};
+    const mouse = { x: 0, y: 0 };
+
+    window.addEventListener('keydown', e => {
+        keys[e.key] = true;
+        if(e.key === 'b' || e.key === 'B') buildBarricade();
+        if(e.key === 'm' || e.key === 'M') moveLocation();
+    });
+    window.addEventListener('keyup', e => keys[e.key] = false);
+    window.addEventListener('mousemove', e => {
+        const rect = canvas.getBoundingClientRect();
+        mouse.x = e.clientX - rect.left;
+        mouse.y = e.clientY - rect.top;
+    });
+    window.addEventListener('mousedown', () => shoot());
+
+    // --- 게임 로직 ---
+
+    function initDay() {
+        // 낮이 되면 자원 생성
+        for(let i=0; i<5 + Math.random()*5; i++) {
+            resources.push({
+                x: Math.random() * (canvas.width - 20),
+                y: Math.random() * (canvas.height - 20),
+                size: 25,
+                hp: 3,
+                color: '#8D6E63' // 나무색
+            });
+        }
+    }
+
+    // 지역 이동 함수 (위험도 리셋)
+    window.moveLocation = function() {
+        if(!gameActive) return;
+        if(isNight) {
+            alert("밤에는 이동할 수 없습니다!");
+            return;
+        }
+        locationStayDays = 1;
+        threatLevel = 1;
+        updateUI();
+        alert("새로운 지역으로 이동했습니다. 안전해 보이지만 자원을 다시 모아야 합니다.");
+        // 이동 시 바리케이드 초기화 (새 지역이니까)
+        barricades = [];
+        // 자원 재생성
+        resources = [];
+        initDay();
+    }
+
+    function spawnZombie() {
+        // 위험도가 높을수록 좀비가 더 자주, 더 강하게 나옴
+        const spawnRate = Math.max(0.5, 3 - (threatLevel * 0.2)); 
+        if (Math.random() * 100 < spawnRate) { 
+            // 화면 밖에서 생성
+            let zx, zy;
+            if(Math.random() < 0.5) {
+                zx = Math.random() < 0.5 ? 0 : canvas.width;
+                zy = Math.random() * canvas.height;
+            } else {
+                zx = Math.random() * canvas.width;
+                zy = Math.random() < 0.5 ? 0 : canvas.height;
+            }
+            
+            zombies.push({
+                x: zx, y: zy,
+                size: 20,
+                speed: 1 + (threatLevel * 0.1), // 위험할수록 빠름
+                hp: 1 + Math.floor(threatLevel / 3), // 위험할수록 튼튼함
+                color: '#E53935'
+            });
+        }
+    }
+
+    function buildBarricade() {
+        if(player.wood >= 10) {
+            player.wood -= 10;
+            barricades.push({
+                x: player.x,
+                y: player.y,
+                size: 30,
+                hp: 20,
+                color: '#FFB74D'
+            });
+            updateUI();
+        }
+    }
+
+    function shoot() {
+        // 마우스 방향으로 공격 (채집 또는 공격)
+        // 1. 자원 채집 체크
+        let hitResource = false;
+        resources.forEach((res, index) => {
+            const dist = Math.hypot(res.x - mouse.x, res.y - mouse.y);
+            if(dist < res.size + 10 && Math.hypot(player.x - res.x, player.y - res.y) < 60) {
+                res.hp--;
+                hitResource = true;
+                if(res.hp <= 0) {
+                    player.wood += 5;
+                    resources.splice(index, 1);
+                    updateUI();
+                }
+            }
+        });
+
+        // 2. 자원이 아니면 총알 발사
+        if(!hitResource) {
+            const angle = Math.atan2(mouse.y - player.y, mouse.x - player.x);
+            bullets.push({
+                x: player.x, y: player.y,
+                vx: Math.cos(angle) * 10,
+                vy: Math.sin(angle) * 10,
+                size: 5
+            });
+        }
+    }
+
+    function update() {
+        if (!gameActive) return;
+
+        // 1. 시간 흐름 관리
+        timeTimer++;
+        if (!isNight && timeTimer > dayDuration) {
+            isNight = true;
+            timeTimer = 0;
+            updateUI();
+        } else if (isNight && timeTimer > nightDuration) {
+            isNight = false;
+            timeTimer = 0;
+            day++;
+            locationStayDays++;
+            threatLevel = locationStayDays; // 오래 머물면 위험도 증가
+            zombies = []; // 아침이 되면 남은 좀비 제거 (선택 사항)
+            initDay();
+            updateUI();
+        }
+
+        // 2. 플레이어 이동
+        if (keys['w'] || keys['W']) player.y -= player.speed;
+        if (keys['s'] || keys['S']) player.y += player.speed;
+        if (keys['a'] || keys['A']) player.x -= player.speed;
+        if (keys['d'] || keys['D']) player.x += player.speed;
+        
+        // 화면 밖 제한
+        player.x = Math.max(0, Math.min(canvas.width, player.x));
+        player.y = Math.max(0, Math.min(canvas.height, player.y));
+
+        // 3. 좀비 로직
+        if(isNight) spawnZombie();
+
+        zombies.forEach((z, zIdx) => {
+            // 플레이어 추적
+            const angle = Math.atan2(player.y - z.y, player.x - z.x);
+            z.x += Math.cos(angle) * z.speed;
+            z.y += Math.sin(angle) * z.speed;
+
+            // 플레이어 충돌
+            const dist = Math.hypot(player.x - z.x, player.y - z.y);
+            if (dist < player.size/2 + z.size/2) {
+                player.hp -= 1;
+                updateUI();
+                if(player.hp <= 0) endGame();
+            }
+
+            // 바리케이드 충돌
+            barricades.forEach((b, bIdx) => {
+                const bDist = Math.hypot(b.x - z.x, b.y - z.y);
+                if (bDist < b.size/2 + z.size/2) {
+                    z.x -= Math.cos(angle) * z.speed; // 밀려남
+                    z.y -= Math.sin(angle) * z.speed;
+                    b.hp -= 0.5;
+                    if(b.hp <= 0) barricades.splice(bIdx, 1);
+                }
+            });
+        });
+
+        // 4. 총알 이동 및 충돌
+        bullets.forEach((b, bIdx) => {
+            b.x += b.vx;
+            b.y += b.vy;
+
+            // 화면 밖 제거
+            if(b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) {
+                bullets.splice(bIdx, 1);
+                return;
+            }
+
+            // 좀비 피격
+            zombies.forEach((z, zIdx) => {
+                const dist = Math.hypot(b.x - z.x, b.y - z.y);
+                if(dist < z.size + b.size) {
+                    z.hp--;
+                    bullets.splice(bIdx, 1); // 총알 제거
+                    if(z.hp <= 0) zombies.splice(zIdx, 1); // 좀비 제거
+                }
+            });
+        });
+    }
+
+    function draw() {
+        // 배경
+        ctx.fillStyle = isNight ? '#1a1a2e' : '#81C784'; // 밤/낮 배경색 변경
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // 자원
+        resources.forEach(r => {
+            ctx.fillStyle = r.color;
+            ctx.fillRect(r.x - r.size/2, r.y - r.size/2, r.size, r.size);
+            ctx.fillStyle = 'white';
+            ctx.fillText("나무", r.x-10, r.y);
+        });
+
+        // 바리케이드
+        barricades.forEach(b => {
+            ctx.fillStyle = b.color;
+            ctx.fillRect(b.x - b.size/2, b.y - b.size/2, b.size, b.size);
+            ctx.strokeStyle = 'black';
+            ctx.strokeRect(b.x - b.size/2, b.y - b.size/2, b.size, b.size);
+        });
+
+        // 플레이어
+        ctx.fillStyle = player.color;
+        ctx.fillRect(player.x - player.size/2, player.y - player.size/2, player.size, player.size);
+        
+        // 좀비
+        zombies.forEach(z => {
+            ctx.fillStyle = z.color;
+            ctx.beginPath();
+            ctx.arc(z.x, z.y, z.size/2, 0, Math.PI*2);
+            ctx.fill();
+        });
+
+        // 총알
+        ctx.fillStyle = 'yellow';
+        bullets.forEach(b => {
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, b.size, 0, Math.PI*2);
+            ctx.fill();
+        });
+        
+        // 어둠 효과 (밤에만)
+        if(isNight) {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+            ctx.fillRect(0,0, canvas.width, canvas.height);
+            // 플레이어 주변 밝게 (전장의 안개 효과 간소화)
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, 150, 0, Math.PI*2);
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+        }
+    }
+
+    function updateUI() {
+        document.getElementById('dayCnt').innerText = day;
+        document.getElementById('timeState').innerText = isNight ? "🌙 밤 (방어!)" : "☀️ 낮 (파밍)";
+        document.getElementById('wood').innerText = player.wood;
+        document.getElementById('hp').innerText = Math.floor(player.hp);
+        document.getElementById('threat').innerText = threatLevel;
+        document.getElementById('stayDays').innerText = locationStayDays;
+    }
+
+    function endGame() {
+        gameActive = false;
+        document.getElementById('msg').style.display = 'block';
+    }
+
+    function loop() {
+        update();
+        draw();
+        requestAnimationFrame(loop);
+    }
+
+    initDay();
+    loop();
+
+</script>
+</body>
+</html>
