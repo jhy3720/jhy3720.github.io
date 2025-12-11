@@ -85,9 +85,7 @@
 /**
  * 100 Dayz Game Logic
  * Updated:
- * - Wood auto-collection (removed furniture destruction)
- * - Fixed spawn overlap with walls/doors
- * - Added Hunger system (decreases every 5s, food restores 10)
+ * - Fixed aiming direction (mouse follow)
  */
 
 const canvas = document.getElementById('gameCanvas');
@@ -119,7 +117,7 @@ const game = {
     player: { 
         x: 0, y: 0, size: 20, 
         hp: 100, maxHp: 100, 
-        hunger: 100, maxHunger: 1000, // 허기 시스템 추가
+        hunger: 100, maxHunger: 1000, 
         ammo: 30, wood: 0, angle: 0 
     },
     bullets: [],
@@ -210,7 +208,6 @@ const game = {
         this.doors.push(newDoor);
 
         // --- 내부 자원 생성 (겹침 방지) ---
-        // 생성 가능한 내부 영역 (벽 두께 제외)
         const safeArea = {
             x: x + wallThickness + 5,
             y: y + wallThickness + 5,
@@ -228,15 +225,13 @@ const game = {
                 ry = safeArea.y + Math.random() * (safeArea.h - width);
                 const rect = {x: rx, y: ry, w: width, h: width};
 
-                // 문과의 거리 체크 (문 근처 생성 방지)
+                // 문과의 거리 체크
                 const distToDoor = utils.dist(rx + width/2, ry + width/2, newDoor.x + newDoor.w/2, newDoor.y + newDoor.h/2);
-                if(distToDoor < 80) { // 문 반경 80px 내 생성 금지
+                if(distToDoor < 80) { 
                     attempts++;
                     continue;
                 }
-
-                // 다른 자원과 겹침 체크 (선택)
-                success = true; // 여기서는 문과 벽 안쪽임만 보장하면 OK
+                success = true;
             }
 
             if(success) {
@@ -247,7 +242,7 @@ const game = {
             }
         };
 
-        // 1. 목재 (기존 가구 -> 자동수집 목재)
+        // 1. 목재
         for(let i=0; i<3 + Math.random()*3; i++) {
             createResource('wood', '#8D6E63', 5, 30);
         }
@@ -257,7 +252,7 @@ const game = {
         }
         // 3. 식량
         if(Math.random() > 0.4) {
-            createResource('food', '#43A047', 10); // 식량은 허기 회복량
+            createResource('food', '#43A047', 10);
         }
     },
 
@@ -332,8 +327,9 @@ const actions = {
         // 사격만 처리 (자원 수집은 자동화됨)
         if(game.player.ammo > 0) {
             game.player.ammo--;
-            const mx = input.mouse.x + game.camera.x;
-            const my = input.mouse.y + game.camera.y;
+            // [수정됨] 마우스 좌표(스크린) - 카메라 오프셋 = 월드 좌표
+            const mx = input.mouse.x - game.camera.x;
+            const my = input.mouse.y - game.camera.y;
             const angle = Math.atan2(my - game.player.y, mx - game.player.x);
             
             game.bullets.push({
@@ -402,13 +398,12 @@ function update() {
     // 1. 시간 흐름 & 허기 시스템
     game.time += 1;
     
-    // 허기 감소 (5초마다 1 감소, 60fps 기준 300프레임)
+    // 허기 감소
     if(game.time % 300 === 0) {
         game.player.hunger = Math.max(0, game.player.hunger - 1);
         ui.update();
         if(game.player.hunger === 0) {
             utils.createFloatText(game.player.x, game.player.y - 20, "배고파...", "orange");
-            // 선택 사항: 공복 시 체력 감소 로직을 넣으려면 여기에 추가
         }
     }
 
@@ -491,7 +486,6 @@ function update() {
                     utils.createFloatText(game.player.x, game.player.y, `+${r.val} 허기`, "#fb8c00");
                     collected = true;
                 } else {
-                    // 배부르면 안 먹음 (선택 사항, 일단 그냥 먹게 하려면 조건 제거)
                     game.player.hunger = Math.min(game.player.maxHunger, game.player.hunger + r.val);
                     utils.createFloatText(game.player.x, game.player.y, `배부름!`, "#fb8c00");
                     collected = true;
@@ -689,8 +683,9 @@ function draw() {
     // 플레이어
     ctx.fillStyle = '#42A5F5';
     ctx.beginPath(); ctx.arc(game.player.x, game.player.y, game.player.size/2, 0, Math.PI*2); ctx.fill();
-    const mx = input.mouse.x + game.camera.x;
-    const my = input.mouse.y + game.camera.y;
+    // [수정됨] 마우스 좌표(스크린) - 카메라 오프셋 = 월드 좌표
+    const mx = input.mouse.x - game.camera.x;
+    const my = input.mouse.y - game.camera.y;
     const angle = Math.atan2(my - game.player.y, mx - game.player.x);
     ctx.strokeStyle = 'white'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(game.player.x, game.player.y);
