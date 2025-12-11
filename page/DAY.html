@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <title>100 Dayz - Survival Raid</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 모바일 확대 방지 및 뷰포트 설정 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #1a1a1a; color: white; overflow: hidden; user-select: none; }
+        /* 터치 액션 제어 (스크롤 방지) */
+        body { background-color: #1a1a1a; color: white; overflow: hidden; user-select: none; touch-action: none; -webkit-touch-callout: none; }
         #game-container { position: relative; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; }
         canvas { background-color: #2e3b28; box-shadow: 0 0 20px rgba(0,0,0,0.8); cursor: crosshair; }
         
@@ -24,7 +26,31 @@
         .hp-fill { background: #e53935; }
         .hunger-fill { background: #fb8c00; }
         
-        #message-modal { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; display: none; background: rgba(0,0,0,0.9); padding: 40px; border-radius: 10px; border: 2px solid #d32f2f; z-index: 10; pointer-events: auto; }
+        /* 시작 화면 (로비) */
+        #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 50; pointer-events: auto; }
+        .mode-btn { margin: 10px; padding: 15px 30px; font-size: 1.2rem; border-radius: 8px; background: #333; border: 2px solid #555; color: white; cursor: pointer; transition: 0.2s; width: 200px; }
+        .mode-btn:hover { background: #555; border-color: #d32f2f; }
+        .mode-btn.mobile { background: #1565C0; border-color: #0D47A1; }
+
+        /* 모바일 컨트롤 (기본 숨김) */
+        #mobile-controls { display: none; position: absolute; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none; z-index: 20; }
+        .touch-btn { pointer-events: auto; position: absolute; background: rgba(255, 255, 255, 0.15); border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; user-select: none; }
+        .touch-btn:active { background: rgba(255, 255, 255, 0.4); }
+        
+        /* D-Pad */
+        #dpad-area { position: absolute; bottom: 40px; left: 40px; width: 150px; height: 150px; }
+        .dpad-btn { width: 50px; height: 50px; }
+        #btn-up { top: 0; left: 50px; }
+        #btn-down { bottom: 0; left: 50px; }
+        #btn-left { top: 50px; left: 0; }
+        #btn-right { top: 50px; right: 0; }
+
+        /* Action Buttons */
+        #action-area { position: absolute; bottom: 40px; right: 40px; width: 180px; height: 150px; }
+        #btn-shoot { width: 80px; height: 80px; bottom: 0; right: 0; background: rgba(229, 57, 53, 0.3); border-color: #e53935; }
+        #btn-build { width: 60px; height: 60px; bottom: 90px; right: 0; background: rgba(255, 183, 77, 0.3); border-color: #FFB74D; font-size: 14px; }
+        
+        #message-modal { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; display: none; background: rgba(0,0,0,0.9); padding: 40px; border-radius: 10px; border: 2px solid #d32f2f; z-index: 60; pointer-events: auto; }
         button.btn-primary { background: #d32f2f; color: white; padding: 8px 16px; border-radius: 4px; font-weight: bold; border: none; cursor: pointer; transition: 0.2s; }
         button.btn-primary:hover { background: #b71c1c; }
     </style>
@@ -34,7 +60,16 @@
 <div id="game-container">
     <canvas id="gameCanvas"></canvas>
 
-    <div id="ui-layer">
+    <!-- 시작 화면 -->
+    <div id="start-screen">
+        <h1 class="text-5xl font-bold mb-8 text-red-500 tracking-wider">100 DAYZ</h1>
+        <p class="mb-8 text-gray-400">생존 모드를 선택하세요</p>
+        <button class="mode-btn" onclick="startGame('pc')">🖥️ PC 모드<br><span class="text-sm text-gray-400">키보드 + 마우스</span></button>
+        <button class="mode-btn mobile" onclick="startGame('mobile')">📱 모바일 모드<br><span class="text-sm text-gray-300">터치 컨트롤</span></button>
+    </div>
+
+    <!-- 인게임 UI 레이어 -->
+    <div id="ui-layer" style="display:none;">
         <!-- 상단 정보 -->
         <div id="top-bar" class="hud-panel">
             <div>📅 <span id="day-display" class="font-bold text-xl text-yellow-400">Day 1</span></div>
@@ -45,13 +80,11 @@
 
         <!-- 하단 스탯 -->
         <div id="stats-bar" class="hud-panel">
-            <!-- 체력 -->
             <div class="mb-2 flex items-center">
                 <span class="stat-icon">❤️</span> 
                 <div class="bar-container"><div id="hp-bar" class="bar-fill hp-fill" style="width: 100%;"></div></div>
                 <span id="hp-text" class="text-sm font-mono">100/100</span>
             </div>
-            <!-- 허기 (신규) -->
             <div class="mb-2 flex items-center">
                 <span class="stat-icon">🍖</span> 
                 <div class="bar-container"><div id="hunger-bar" class="bar-fill hunger-fill" style="width: 10%; origin: left;"></div></div>
@@ -64,12 +97,26 @@
             </div>
         </div>
 
-        <!-- 조작법 -->
+        <!-- PC용 조작법 (모바일일 때 숨김) -->
         <div id="controls-info" class="hud-panel">
             <p>[W,A,S,D] 이동</p>
             <p>[클릭] 사격</p>
             <p>[몸으로 닿기] 아이템/목재 수집</p>
             <p>[B] 바리케이드 건설</p>
+        </div>
+    </div>
+
+    <!-- 모바일 컨트롤 레이어 -->
+    <div id="mobile-controls">
+        <div id="dpad-area">
+            <div class="touch-btn dpad-btn" id="btn-up">▲</div>
+            <div class="touch-btn dpad-btn" id="btn-left">◀</div>
+            <div class="touch-btn dpad-btn" id="btn-right">▶</div>
+            <div class="touch-btn dpad-btn" id="btn-down">▼</div>
+        </div>
+        <div id="action-area">
+            <div class="touch-btn" id="btn-build">🔨</div>
+            <div class="touch-btn" id="btn-shoot">🔫</div>
         </div>
     </div>
 
@@ -82,16 +129,9 @@
 </div>
 
 <script>
-/**
- * 100 Dayz Game Logic
- * Updated:
- * - Fixed aiming direction (mouse follow)
- */
-
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// 캔버스 크기 조정
 function resize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -100,17 +140,17 @@ window.addEventListener('resize', resize);
 resize();
 
 // --- 게임 설정 ---
-const TILE_SIZE = 40;
 const PLAYER_SPEED = 4;
 const ZOMBIE_BASE_SPEED = 1.5;
 
 // 게임 상태
 const game = {
-    active: true,
+    active: false, // 시작 버튼 누르기 전엔 비활성
+    mode: 'pc',    // 'pc' or 'mobile'
     day: 1,
-    time: 0, // 0 ~ 2400 (하루 사이클)
+    time: 0,
     isNight: false,
-    stayDuration: 1, // 한 지역 체류일
+    stayDuration: 1,
     threat: 1,
     
     // 엔티티
@@ -118,20 +158,20 @@ const game = {
         x: 0, y: 0, size: 20, 
         hp: 100, maxHp: 100, 
         hunger: 100, maxHunger: 1000, 
-        ammo: 30, wood: 0, angle: 0 
+        ammo: 30, wood: 0 
     },
     bullets: [],
     zombies: [],
-    walls: [], // {x, y, w, h}
-    doors: [], // {x, y, w, h, hp, maxHp, active}
-    resources: [], // {x, y, w, h, type, val}
-    barricades: [], // {x, y, hp}
+    walls: [],
+    doors: [],
+    resources: [],
+    barricades: [],
     particles: [],
-
-    // 시스템
     camera: { x: 0, y: 0 },
+
+    // 마지막 이동 방향 (모바일 자동 조준용)
+    lastMoveDir: { x: 1, y: 0 },
     
-    // 초기화 및 지역 이동
     initWorld: function() {
         this.walls = [];
         this.doors = [];
@@ -140,130 +180,76 @@ const game = {
         this.zombies = [];
         this.bullets = [];
         
-        // 맵 생성 (격자 형태의 방 배치)
         const mapW = 2000;
         const mapH = 2000;
         
-        // 플레이어 중앙 배치
         this.player.x = mapW / 2;
         this.player.y = mapH / 2;
 
-        // 건물 생성 (랜덤 위치에 5~8개)
         const houseCount = 5 + Math.floor(Math.random() * 4);
-        
         for(let i=0; i<houseCount; i++) {
-            let hw = 200 + Math.random() * 300; // 너비
-            let hh = 200 + Math.random() * 300; // 높이
+            let hw = 200 + Math.random() * 300;
+            let hh = 200 + Math.random() * 300;
             let hx = Math.random() * (mapW - hw);
             let hy = Math.random() * (mapH - hh);
-            
             this.createHouse(hx, hy, hw, hh);
         }
-
-        // 야외 장식
         for(let i=0; i<30; i++) {
             this.particles.push({
                 x: Math.random() * mapW,
                 y: Math.random() * mapH,
                 size: Math.random() * 5 + 2,
                 color: '#3e4f35',
-                life: 99999, // 영구 지속
-                type: 'deco'
+                life: 99999, type: 'deco'
             });
         }
-        
-        // 안내 메시지
         this.showMessage(`Day ${this.day} 시작`, "건물 안을 파밍하고 밤을 대비하세요!", 2000);
     },
 
     createHouse: function(x, y, w, h) {
         const wallThickness = 20;
-        
-        // 벽 4개 생성 (임시 저장 후 문 뚫기)
-        // 위
-        this.walls.push({x: x, y: y, w: w, h: wallThickness});
-        // 아래 (나중에 쪼개짐)
+        this.walls.push({x: x, y: y, w: w, h: wallThickness}); // 위
         const bottomWallY = y + h - wallThickness;
-        // 왼쪽
-        this.walls.push({x: x, y: y, w: wallThickness, h: h});
-        // 오른쪽
-        this.walls.push({x: x + w - wallThickness, y: y, w: wallThickness, h: h});
+        this.walls.push({x: x, y: y, w: wallThickness, h: h}); // 왼쪽
+        this.walls.push({x: x + w - wallThickness, y: y, w: wallThickness, h: h}); // 오른쪽
 
-        // 문 생성 (아래쪽 벽 중앙)
         const doorW = 80;
         const doorH = wallThickness;
         const doorX = x + w/2 - doorW/2;
         const doorY = bottomWallY;
 
-        // 아래쪽 벽 2개로 분할
         this.walls.push({x: x, y: bottomWallY, w: w/2 - doorW/2, h: wallThickness});
         this.walls.push({x: x + w/2 + doorW/2, y: bottomWallY, w: w/2 - doorW/2, h: wallThickness});
 
-        // 문 객체
-        const newDoor = {
-            x: doorX, y: doorY, w: doorW, h: doorH,
-            hp: 100, maxHp: 100,
-            active: true
-        };
+        const newDoor = { x: doorX, y: doorY, w: doorW, h: doorH, hp: 100, maxHp: 100, active: true };
         this.doors.push(newDoor);
 
-        // --- 내부 자원 생성 (겹침 방지) ---
-        const safeArea = {
-            x: x + wallThickness + 5,
-            y: y + wallThickness + 5,
-            w: w - (wallThickness*2) - 10,
-            h: h - (wallThickness*2) - 10
-        };
+        const safeArea = { x: x + wallThickness + 5, y: y + wallThickness + 5, w: w - (wallThickness*2) - 10, h: h - (wallThickness*2) - 10 };
 
         const createResource = (type, color, val, width=20) => {
             let attempts = 0;
             let success = false;
             let rx, ry;
-
             while(attempts < 10 && !success) {
                 rx = safeArea.x + Math.random() * (safeArea.w - width);
                 ry = safeArea.y + Math.random() * (safeArea.h - width);
-                const rect = {x: rx, y: ry, w: width, h: width};
-
-                // 문과의 거리 체크
                 const distToDoor = utils.dist(rx + width/2, ry + width/2, newDoor.x + newDoor.w/2, newDoor.y + newDoor.h/2);
-                if(distToDoor < 80) { 
-                    attempts++;
-                    continue;
-                }
+                if(distToDoor < 80) { attempts++; continue; }
                 success = true;
             }
-
-            if(success) {
-                this.resources.push({
-                    x: rx, y: ry, w: width, h: width,
-                    type: type, val: val, color: color
-                });
-            }
+            if(success) this.resources.push({ x: rx, y: ry, w: width, h: width, type: type, val: val, color: color });
         };
 
-        // 1. 목재
-        for(let i=0; i<3 + Math.random()*3; i++) {
-            createResource('wood', '#8D6E63', 5, 30);
-        }
-        // 2. 탄약
-        if(Math.random() > 0.3) {
-            createResource('ammo', '#FDD835', 10 + Math.floor(Math.random()*10));
-        }
-        // 3. 식량
-        if(Math.random() > 0.4) {
-            createResource('food', '#43A047', 10);
-        }
+        for(let i=0; i<3 + Math.random()*3; i++) createResource('wood', '#8D6E63', 5, 30);
+        if(Math.random() > 0.3) createResource('ammo', '#FDD835', 10 + Math.floor(Math.random()*10));
+        if(Math.random() > 0.4) createResource('food', '#43A047', 10);
     },
 
     travel: function() {
-        if(this.isNight) {
-            this.showMessage("이동 불가!", "밤에는 너무 위험해서 이동할 수 없습니다.", 1500);
-            return;
-        }
+        if(this.isNight) { this.showMessage("이동 불가!", "밤에는 너무 위험해서 이동할 수 없습니다.", 1500); return; }
         this.stayDuration = 1;
         this.threat = 1;
-        this.time = 0; // 아침으로
+        this.time = 0;
         this.initWorld();
         ui.update();
     },
@@ -273,17 +259,10 @@ const game = {
         const dist = Math.max(canvas.width, canvas.height) / 2 + 100;
         const zx = this.player.x + Math.cos(angle) * dist;
         const zy = this.player.y + Math.sin(angle) * dist;
-
         const hp = 2 + Math.floor(this.threat * 1.5);
         const speed = ZOMBIE_BASE_SPEED + (this.threat * 0.1);
 
-        this.zombies.push({
-            x: zx, y: zy, size: 20,
-            hp: hp, maxHp: hp,
-            speed: speed,
-            attackCd: 0,
-            color: '#e53935'
-        });
+        this.zombies.push({ x: zx, y: zy, size: 20, hp: hp, maxHp: hp, speed: speed, attackCd: 0, color: '#e53935' });
     },
 
     showMessage: function(title, desc, duration) {
@@ -292,17 +271,36 @@ const game = {
             modal.style.display = 'block';
             document.getElementById('msg-title').innerText = title;
             document.getElementById('msg-desc').innerText = desc;
-        } else {
-            console.log(title, desc);
-        }
+        } else { console.log(title, desc); }
     }
 };
+
+// --- 게임 시작 함수 ---
+function startGame(mode) {
+    game.mode = mode;
+    game.active = true;
+    
+    // UI 전환
+    document.getElementById('start-screen').style.display = 'none';
+    document.getElementById('ui-layer').style.display = 'block';
+    
+    if (mode === 'mobile') {
+        document.getElementById('mobile-controls').style.display = 'block';
+        document.getElementById('controls-info').style.display = 'none'; // PC 설명 숨김
+    }
+
+    input.init();
+    game.initWorld();
+    loop();
+}
 
 // --- 입력 처리 ---
 const input = {
     keys: {},
     mouse: { x: 0, y: 0, down: false },
+    
     init: function() {
+        // PC 키보드
         window.addEventListener('keydown', e => {
             this.keys[e.key.toLowerCase()] = true;
             if(e.key.toLowerCase() === 'b') actions.buildBarricade();
@@ -314,9 +312,36 @@ const input = {
         });
         window.addEventListener('mousedown', () => {
             this.mouse.down = true;
-            actions.shootOrInteract();
+            if(game.mode === 'pc') actions.shootOrInteract();
         });
         window.addEventListener('mouseup', () => this.mouse.down = false);
+
+        // 모바일 터치 (Safari 등에서 기본 동작 방지)
+        if(game.mode === 'mobile') {
+            const bindTouch = (id, key) => {
+                const el = document.getElementById(id);
+                el.addEventListener('touchstart', (e) => { e.preventDefault(); this.keys[key] = true; });
+                el.addEventListener('touchend', (e) => { e.preventDefault(); this.keys[key] = false; });
+            };
+            
+            bindTouch('btn-up', 'w');
+            bindTouch('btn-down', 's');
+            bindTouch('btn-left', 'a');
+            bindTouch('btn-right', 'd');
+            
+            // 버튼 액션
+            const btnShoot = document.getElementById('btn-shoot');
+            btnShoot.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                actions.shootOrInteract();
+            });
+            
+            const btnBuild = document.getElementById('btn-build');
+            btnBuild.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                actions.buildBarricade();
+            });
+        }
     }
 };
 
@@ -324,13 +349,39 @@ const actions = {
     shootOrInteract: function() {
         if(!game.active) return;
 
-        // 사격만 처리 (자원 수집은 자동화됨)
+        // 사격
         if(game.player.ammo > 0) {
             game.player.ammo--;
-            // [수정됨] 마우스 좌표(스크린) - 카메라 오프셋 = 월드 좌표
-            const mx = input.mouse.x - game.camera.x;
-            const my = input.mouse.y - game.camera.y;
-            const angle = Math.atan2(my - game.player.y, mx - game.player.x);
+            
+            let angle = 0;
+
+            if (game.mode === 'pc') {
+                // PC: 마우스 방향 조준
+                const mx = input.mouse.x - game.camera.x;
+                const my = input.mouse.y - game.camera.y;
+                angle = Math.atan2(my - game.player.y, mx - game.player.x);
+            } else {
+                // Mobile: 자동 조준 (가장 가까운 좀비 > 보는 방향)
+                let nearestDist = Infinity;
+                let targetZombie = null;
+
+                for(let z of game.zombies) {
+                    const d = utils.dist(game.player.x, game.player.y, z.x, z.y);
+                    // 화면 내에 있는 좀비만 (대략 600px 반경)
+                    if (d < 600 && d < nearestDist) {
+                        nearestDist = d;
+                        targetZombie = z;
+                    }
+                }
+
+                if (targetZombie) {
+                    angle = Math.atan2(targetZombie.y - game.player.y, targetZombie.x - game.player.x);
+                } else {
+                    // 좀비 없으면 이동 방향으로 쏨
+                    angle = Math.atan2(game.lastMoveDir.y, game.lastMoveDir.x);
+                    if(game.lastMoveDir.x === 0 && game.lastMoveDir.y === 0) angle = 0; // 정지시 우측
+                }
+            }
             
             game.bullets.push({
                 x: game.player.x, y: game.player.y,
@@ -338,6 +389,7 @@ const actions = {
                 vy: Math.sin(angle) * 15,
                 life: 100
             });
+            
             // 반동
             game.camera.x += Math.cos(angle) * 2;
             game.camera.y += Math.sin(angle) * 2;
@@ -351,10 +403,7 @@ const actions = {
         if(game.player.wood >= 10) {
             game.player.wood -= 10;
             game.barricades.push({
-                x: game.player.x - 15,
-                y: game.player.y - 15,
-                w: 30, h: 30,
-                hp: 50, maxHp: 50
+                x: game.player.x - 15, y: game.player.y - 15, w: 30, h: 30, hp: 50, maxHp: 50
             });
             utils.createFloatText(game.player.x, game.player.y - 40, "바리케이드 설치", "#FFB74D");
             ui.update();
@@ -364,7 +413,6 @@ const actions = {
     }
 };
 
-// --- 유틸리티 ---
 const utils = {
     dist: (x1, y1, x2, y2) => Math.hypot(x2-x1, y2-y1),
     rectIntersect: (r1, r2) => {
@@ -375,11 +423,8 @@ const utils = {
         for(let i=0; i<count; i++) {
             game.particles.push({
                 x: x, y: y,
-                vx: (Math.random() - 0.5) * 5,
-                vy: (Math.random() - 0.5) * 5,
-                life: 20,
-                color: color,
-                size: Math.random() * 3 + 1
+                vx: (Math.random() - 0.5) * 5, vy: (Math.random() - 0.5) * 5,
+                life: 20, color: color, size: Math.random() * 3 + 1
             });
         }
     },
@@ -395,16 +440,11 @@ const utils = {
 function update() {
     if(!game.active) return;
 
-    // 1. 시간 흐름 & 허기 시스템
     game.time += 1;
-    
-    // 허기 감소
     if(game.time % 300 === 0) {
         game.player.hunger = Math.max(0, game.player.hunger - 1);
         ui.update();
-        if(game.player.hunger === 0) {
-            utils.createFloatText(game.player.x, game.player.y - 20, "배고파...", "orange");
-        }
+        if(game.player.hunger === 0) utils.createFloatText(game.player.x, game.player.y - 20, "배고파...", "orange");
     }
 
     const dayLength = 3600;
@@ -426,13 +466,12 @@ function update() {
         ui.update();
     }
 
-    // 2. 좀비 스폰 (밤)
     if(game.isNight) {
         const spawnInterval = Math.max(20, 120 - (game.threat * 5));
         if(game.time % spawnInterval === 0) game.spawnZombie();
     }
 
-    // 3. 플레이어 이동
+    // 플레이어 이동
     let moveX = 0;
     let moveY = 0;
     if(input.keys['w']) moveY = -PLAYER_SPEED;
@@ -440,21 +479,22 @@ function update() {
     if(input.keys['a']) moveX = -PLAYER_SPEED;
     if(input.keys['d']) moveX = PLAYER_SPEED;
 
+    // 이동 방향 저장 (모바일 자동 조준용)
+    if (moveX !== 0 || moveY !== 0) {
+        game.lastMoveDir = { x: moveX, y: moveY };
+    }
+
     game.player.x += moveX;
     let playerRect = { x: game.player.x - 10, y: game.player.y - 10, w: 20, h: 20 };
     
-    // 벽 충돌
     for(let w of game.walls) {
         if(utils.rectIntersect(playerRect, w)) {
-            if(moveX > 0) game.player.x = w.x - 10;
-            else if(moveX < 0) game.player.x = w.x + w.w + 10;
+            if(moveX > 0) game.player.x = w.x - 10; else if(moveX < 0) game.player.x = w.x + w.w + 10;
         }
     }
-    // 문 충돌 (닫힌 문)
     for(let d of game.doors) {
         if(d.active && utils.rectIntersect(playerRect, d)) {
-             if(moveX > 0) game.player.x = d.x - 10;
-             else if(moveX < 0) game.player.x = d.x + d.w + 10;
+             if(moveX > 0) game.player.x = d.x - 10; else if(moveX < 0) game.player.x = d.x + d.w + 10;
         }
     }
 
@@ -463,33 +503,24 @@ function update() {
     
     for(let w of game.walls) {
         if(utils.rectIntersect(playerRect, w)) {
-            if(moveY > 0) game.player.y = w.y - 10;
-            else if(moveY < 0) game.player.y = w.y + w.h + 10;
+            if(moveY > 0) game.player.y = w.y - 10; else if(moveY < 0) game.player.y = w.y + w.h + 10;
         }
     }
     for(let d of game.doors) {
         if(d.active && utils.rectIntersect(playerRect, d)) {
-             if(moveY > 0) game.player.y = d.y - 10;
-             else if(moveY < 0) game.player.y = d.y + d.h + 10;
+             if(moveY > 0) game.player.y = d.y - 10; else if(moveY < 0) game.player.y = d.y + d.h + 10;
         }
     }
 
-    // 4. 자원 자동 수집 (모든 자원)
+    // 자원 수집
     for(let i=game.resources.length-1; i>=0; i--) {
         let r = game.resources[i];
         if(utils.dist(game.player.x, game.player.y, r.x + r.w/2, r.y + r.h/2) < 30) {
             let collected = false;
-            
             if(r.type === 'food') {
-                if(game.player.hunger < game.player.maxHunger) {
-                    game.player.hunger = Math.min(game.player.maxHunger, game.player.hunger + r.val);
-                    utils.createFloatText(game.player.x, game.player.y, `+${r.val} 허기`, "#fb8c00");
-                    collected = true;
-                } else {
-                    game.player.hunger = Math.min(game.player.maxHunger, game.player.hunger + r.val);
-                    utils.createFloatText(game.player.x, game.player.y, `배부름!`, "#fb8c00");
-                    collected = true;
-                }
+                game.player.hunger = Math.min(game.player.maxHunger, game.player.hunger + r.val);
+                utils.createFloatText(game.player.x, game.player.y, `+${r.val} 허기`, "#fb8c00");
+                collected = true;
             } else if (r.type === 'ammo') {
                 game.player.ammo += r.val;
                 utils.createFloatText(game.player.x, game.player.y, `+${r.val} 탄약`, "#FDD835");
@@ -499,15 +530,11 @@ function update() {
                 utils.createFloatText(game.player.x, game.player.y, `+${r.val} 목재`, "#8D6E63");
                 collected = true;
             }
-
-            if(collected) {
-                game.resources.splice(i, 1);
-                ui.update();
-            }
+            if(collected) { game.resources.splice(i, 1); ui.update(); }
         }
     }
 
-    // 5. 총알
+    // 총알
     for(let i=game.bullets.length-1; i>=0; i--) {
         let b = game.bullets[i];
         b.x += b.vx; b.y += b.vy; b.life--;
@@ -515,33 +542,21 @@ function update() {
 
         let bulletRect = { x: b.x-2, y: b.y-2, w: 4, h: 4 };
         let hit = false;
-
-        // 문 타격
         for(let d of game.doors) {
             if(d.active && utils.rectIntersect(bulletRect, d)) {
-                d.hp -= 10;
-                utils.createParticles(b.x, b.y, '#8D6E63', 2);
-                if(d.hp <= 0) d.active = false;
-                hit = true; break;
+                d.hp -= 10; utils.createParticles(b.x, b.y, '#8D6E63', 2);
+                if(d.hp <= 0) d.active = false; hit = true; break;
             }
         }
-        
-        // 좀비 타격
         if(!hit) {
             for(let zIndex=game.zombies.length-1; zIndex>=0; zIndex--) {
                 let z = game.zombies[zIndex];
                 if(utils.dist(b.x, b.y, z.x, z.y) < z.size + 2) {
-                    z.hp--;
-                    z.x -= b.vx * 0.2; z.y -= b.vy * 0.2;
+                    z.hp--; z.x -= b.vx * 0.2; z.y -= b.vy * 0.2;
                     utils.createParticles(z.x, z.y, '#e53935', 3);
                     if(z.hp <= 0) {
                         game.zombies.splice(zIndex, 1);
-                        if(Math.random() < 0.2) {
-                            game.resources.push({
-                                x: z.x - 10, y: z.y - 10, w: 20, h: 20,
-                                type: 'ammo', val: 5, color: '#FDD835'
-                            });
-                        }
+                        if(Math.random() < 0.2) game.resources.push({ x: z.x - 10, y: z.y - 10, w: 20, h: 20, type: 'ammo', val: 5, color: '#FDD835' });
                     }
                     hit = true; break;
                 }
@@ -550,7 +565,7 @@ function update() {
         if(hit) game.bullets.splice(i, 1);
     }
 
-    // 6. 좀비 로직
+    // 좀비 로직
     for(let z of game.zombies) {
         const angle = Math.atan2(game.player.y - z.y, game.player.x - z.x);
         let nextX = z.x + Math.cos(angle) * z.speed;
@@ -558,18 +573,12 @@ function update() {
         let zRect = { x: nextX - z.size/2, y: nextY - z.size/2, w: z.size, h: z.size };
 
         let blocked = false;
-        // 벽/문/바리케이드 충돌
         for(let w of game.walls) if(utils.rectIntersect(zRect, w)) { blocked = true; break; }
         if(!blocked) {
             for(let d of game.doors) {
                 if(d.active && utils.rectIntersect(zRect, d)) {
-                    blocked = true;
-                    z.attackCd--;
-                    if(z.attackCd <= 0) {
-                        d.hp -= 2; utils.createParticles(d.x+d.w/2, d.y+d.h/2, '#8D6E63', 1);
-                        if(d.hp<=0) d.active = false;
-                        z.attackCd=30;
-                    }
+                    blocked = true; z.attackCd--;
+                    if(z.attackCd <= 0) { d.hp -= 2; utils.createParticles(d.x+d.w/2, d.y+d.h/2, '#8D6E63', 1); if(d.hp<=0) d.active = false; z.attackCd=30; }
                 }
             }
         }
@@ -577,29 +586,19 @@ function update() {
             for(let i=game.barricades.length-1; i>=0; i--) {
                 let b = game.barricades[i];
                 if(utils.rectIntersect(zRect, b)) {
-                    blocked = true;
-                    z.attackCd--;
-                    if(z.attackCd <= 0) {
-                        b.hp -= 2; utils.createParticles(b.x+b.w/2, b.y+b.h/2, '#FFB74D', 1);
-                        if(b.hp<=0) game.barricades.splice(i, 1);
-                        z.attackCd=30;
-                    }
+                    blocked = true; z.attackCd--;
+                    if(z.attackCd <= 0) { b.hp -= 2; utils.createParticles(b.x+b.w/2, b.y+b.h/2, '#FFB74D', 1); if(b.hp<=0) game.barricades.splice(i, 1); z.attackCd=30; }
                 }
             }
         }
-
         if(!blocked) { z.x = nextX; z.y = nextY; }
 
         if(utils.dist(z.x, z.y, game.player.x, game.player.y) < z.size + 10) {
              z.attackCd--;
              if(z.attackCd <= 0) {
-                 game.player.hp -= 10;
-                 ui.update();
+                 game.player.hp -= 10; ui.update();
                  utils.createFloatText(game.player.x, game.player.y, "-10", "red");
-                 if(game.player.hp <= 0) {
-                     game.active = false;
-                     game.showMessage("GAME OVER", "당신은 생존하지 못했습니다.");
-                 }
+                 if(game.player.hp <= 0) { game.active = false; game.showMessage("GAME OVER", "당신은 생존하지 못했습니다."); }
                  z.attackCd = 60;
              }
         }
@@ -632,41 +631,28 @@ function draw() {
     ctx.stroke();
 
     // 장식
-    game.particles.forEach(p => {
-        if(p.type === 'deco') {
-            ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
-        }
-    });
+    game.particles.forEach(p => { if(p.type === 'deco') { ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill(); } });
 
     // 벽
     ctx.fillStyle = '#9E9E9E';
-    for(let w of game.walls) {
-        ctx.fillRect(w.x, w.y, w.w, w.h);
-        ctx.strokeStyle = '#616161'; ctx.strokeRect(w.x, w.y, w.w, w.h);
-    }
+    for(let w of game.walls) { ctx.fillRect(w.x, w.y, w.w, w.h); ctx.strokeStyle = '#616161'; ctx.strokeRect(w.x, w.y, w.w, w.h); }
 
     // 자원
     for(let r of game.resources) {
-        ctx.fillStyle = r.color;
-        ctx.fillRect(r.x, r.y, r.w, r.h);
+        ctx.fillStyle = r.color; ctx.fillRect(r.x, r.y, r.w, r.h);
         ctx.fillStyle = 'white'; ctx.font = '10px Arial';
         let name = r.type === 'wood' ? '목재' : (r.type === 'food' ? '식량' : '탄약');
         ctx.fillText(name, r.x, r.y - 5);
-        // 목재 HP바 삭제됨 (자동 수집이므로)
     }
 
     // 바리케이드
     ctx.fillStyle = '#FFB74D';
-    for(let b of game.barricades) {
-        ctx.fillRect(b.x, b.y, b.w, b.h);
-        ctx.strokeStyle = '#E65100'; ctx.strokeRect(b.x, b.y, b.w, b.h);
-    }
+    for(let b of game.barricades) { ctx.fillRect(b.x, b.y, b.w, b.h); ctx.strokeStyle = '#E65100'; ctx.strokeRect(b.x, b.y, b.w, b.h); }
 
     // 문
     for(let d of game.doors) {
         if(d.active) {
-            ctx.fillStyle = '#795548';
-            ctx.fillRect(d.x, d.y, d.w, d.h);
+            ctx.fillStyle = '#795548'; ctx.fillRect(d.x, d.y, d.w, d.h);
             ctx.fillStyle = 'black'; ctx.fillRect(d.x, d.y - 10, d.w, 5);
             ctx.fillStyle = 'lime'; ctx.fillRect(d.x, d.y - 10, (d.hp/d.maxHp)*d.w, 5);
         }
@@ -674,8 +660,7 @@ function draw() {
 
     // 좀비
     for(let z of game.zombies) {
-        ctx.fillStyle = z.color;
-        ctx.beginPath(); ctx.arc(z.x, z.y, z.size/2, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = z.color; ctx.beginPath(); ctx.arc(z.x, z.y, z.size/2, 0, Math.PI*2); ctx.fill();
         ctx.fillStyle = 'red'; ctx.fillRect(z.x - 10, z.y - 20, 20, 4);
         ctx.fillStyle = 'lime'; ctx.fillRect(z.x - 10, z.y - 20, (z.hp/z.maxHp)*20, 4);
     }
@@ -683,26 +668,36 @@ function draw() {
     // 플레이어
     ctx.fillStyle = '#42A5F5';
     ctx.beginPath(); ctx.arc(game.player.x, game.player.y, game.player.size/2, 0, Math.PI*2); ctx.fill();
-    // [수정됨] 마우스 좌표(스크린) - 카메라 오프셋 = 월드 좌표
-    const mx = input.mouse.x - game.camera.x;
-    const my = input.mouse.y - game.camera.y;
-    const angle = Math.atan2(my - game.player.y, mx - game.player.x);
-    ctx.strokeStyle = 'white'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(game.player.x, game.player.y);
-    ctx.lineTo(game.player.x + Math.cos(angle)*20, game.player.y + Math.sin(angle)*20);
-    ctx.stroke();
+    
+    // 조준선 (PC만)
+    if (game.mode === 'pc') {
+        const mx = input.mouse.x - game.camera.x;
+        const my = input.mouse.y - game.camera.y;
+        const angle = Math.atan2(my - game.player.y, mx - game.player.x);
+        ctx.strokeStyle = 'white'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(game.player.x, game.player.y);
+        ctx.lineTo(game.player.x + Math.cos(angle)*20, game.player.y + Math.sin(angle)*20);
+        ctx.stroke();
+    } else {
+        // 모바일은 보는 방향 조금 표시
+        const angle = Math.atan2(game.lastMoveDir.y, game.lastMoveDir.x);
+         // 이동 중이 아니면 오른쪽
+        const finalAngle = (game.lastMoveDir.x === 0 && game.lastMoveDir.y === 0) ? 0 : angle;
+        
+        ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(game.player.x, game.player.y);
+        ctx.lineTo(game.player.x + Math.cos(finalAngle)*20, game.player.y + Math.sin(finalAngle)*20);
+        ctx.stroke();
+    }
 
     // 총알
     ctx.fillStyle = '#FFF176';
     for(let b of game.bullets) { ctx.beginPath(); ctx.arc(b.x, b.y, 2, 0, Math.PI*2); ctx.fill(); }
 
-    // 파티클 (텍스트 등)
+    // 파티클
     for(let p of game.particles) {
-        if(p.type === 'text') {
-            ctx.fillStyle = p.color; ctx.font = 'bold 14px sans-serif'; ctx.fillText(p.text, p.x, p.y);
-        } else if (p.type !== 'deco') {
-            ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, p.size, p.size);
-        }
+        if(p.type === 'text') { ctx.fillStyle = p.color; ctx.font = 'bold 14px sans-serif'; ctx.fillText(p.text, p.x, p.y); } 
+        else if (p.type !== 'deco') { ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, p.size, p.size); }
     }
 
     if(game.isNight) {
@@ -721,25 +716,17 @@ const ui = {
         const realHour = hour % 24;
         document.getElementById('time-display').innerText = `${realHour < 10 ? '0'+realHour : realHour}:00`;
         document.getElementById('threat-display').innerText = game.threat;
-        
-        // 체력바
         document.getElementById('hp-text').innerText = `${Math.ceil(game.player.hp)}/${game.player.maxHp}`;
         document.getElementById('hp-bar').style.width = `${(game.player.hp/game.player.maxHp)*100}%`;
-        
-        // 허기바
         document.getElementById('hunger-text').innerText = `${game.player.hunger}/${game.player.maxHunger}`;
         document.getElementById('hunger-bar').style.width = `${(game.player.hunger/game.player.maxHunger)*100}%`;
-
         document.getElementById('wood-text').innerText = game.player.wood;
         document.getElementById('ammo-text').innerText = game.player.ammo;
     }
 }
 
-input.init();
-game.initWorld();
 function loop() { update(); draw(); requestAnimationFrame(loop); }
-loop();
-
+// 시작은 버튼 클릭 시 (startGame) 호출됨
 </script>
 </body>
 </html>
