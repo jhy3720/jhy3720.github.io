@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>강화 게임</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --panel: rgba(255, 255, 255, 0.06);
+      --panel-strong: rgba(255, 255, 255, 0.1);
+      --line: rgba(255, 255, 255, 0.12);
+      --line-strong: rgba(255, 255, 255, 0.18);
+      --text: #f5f7fb;
+      --muted: #a7b0c0;
+      --accent: #7c9cff;
+      --accent-strong: #5d82ff;
+      --success: #57c785;
+      --warning: #ffb454;
+      --danger: #ff6b6b;
+      --shadow: rgba(0, 0, 0, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Pretendard", "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(124, 156, 255, 0.16), transparent 30%),
+        linear-gradient(180deg, #171a21 0%, #0c0e13 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .game-frame {
+      width: min(440px, 100%);
+      min-height: 790px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.03) 100%);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 22px 18px 24px;
+      position: relative;
+      box-shadow:
+        0 24px 60px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(255,255,255,0.08);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      overflow: hidden;
+    }
+
+    .game-frame::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.05), transparent 34%, transparent 66%, rgba(124,156,255,0.06));
+      pointer-events: none;
+    }
+
+    .top-row,
+    .content-area,
+    .message,
+    .hint {
+      position: relative;
+      z-index: 1;
+    }
+
+    .top-row {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .outlined-box {
+      background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+      border: 1px solid var(--line-strong);
+      border-radius: 18px;
+      padding: 10px 14px;
+      font-weight: 700;
+      box-shadow:
+        0 10px 24px rgba(0, 0, 0, 0.18),
+        inset 0 1px 0 rgba(255,255,255,0.08);
+      user-select: none;
+      color: var(--text);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    button.outlined-box,
+    .small-btn,
+    .ground-chip,
+    .monster-card {
+      font: inherit;
+      color: inherit;
+    }
+
+    .shop-box,
+    .mode-box,
+    .attempt-box,
+    .small-btn,
+    .ground-chip,
+    .monster-card {
+      transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease, filter 0.14s ease, background 0.14s ease;
+    }
+
+    .shop-box,
+    .mode-box {
+      min-width: 98px;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .shop-box:hover,
+    .mode-box:hover,
+    .small-btn:hover,
+    .ground-chip:hover,
+    .monster-card:hover:not(:disabled),
+    .attempt-box:hover:not(:disabled) {
+      transform: translateY(-2px);
+    }
+
+    .shop-box:hover,
+    .mode-box:hover,
+    .small-btn:hover,
+    .ground-chip:hover {
+      border-color: rgba(124, 156, 255, 0.32);
+    }
+
+    .mode-box.active {
+      background: linear-gradient(180deg, rgba(124,156,255,0.95) 0%, rgba(93,130,255,0.92) 100%);
+      color: #ffffff;
+      border-color: rgba(154, 177, 255, 0.35);
+      box-shadow:
+        0 16px 28px rgba(42, 72, 170, 0.3),
+        inset 0 1px 0 rgba(255,255,255,0.16);
+    }
+
+    .gold-box {
+      width: fit-content;
+      min-width: 120px;
+      text-align: center;
+      font-size: 0.96rem;
+      color: #ffe08a;
+      letter-spacing: 0.01em;
+    }
+
+    .content-area {
+      min-height: 610px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    .center-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .weapon-name-box {
+      min-width: 170px;
+      text-align: center;
+      font-size: 1.04rem;
+      padding-inline: 20px;
+      background: linear-gradient(180deg, rgba(124,156,255,0.16) 0%, rgba(124,156,255,0.06) 100%);
+      border-color: rgba(124,156,255,0.22);
+    }
+
+    .weapon-display,
+    .monster-display {
+      border: 1px solid var(--line-strong);
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(circle at top, rgba(255,255,255,0.08), transparent 58%),
+        linear-gradient(180deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.04) 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.08),
+        0 14px 32px rgba(0, 0, 0, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .weapon-display {
+      width: 152px;
+      height: 184px;
+    }
+
+    .monster-display {
+      width: 100%;
+      min-height: 250px;
+      cursor: pointer;
+      padding: 14px;
+    }
+
+    .weapon-display::after,
+    .monster-display::after {
+      content: "";
+      position: absolute;
+      inset: 16px;
+      border-radius: 18px;
+      border: 1px dashed rgba(255,255,255,0.08);
+      pointer-events: none;
+    }
+
+    .weapon-display.shake,
+    .monster-display.hit {
+      animation: shake 0.45s ease;
+    }
+
+    .weapon-display.success {
+      animation: glowSuccess 0.75s ease;
+    }
+
+    .weapon-display.destroyed,
+    .monster-display.dead {
+      animation: flashDestroy 0.75s ease;
+      opacity: 0.5;
+    }
+
+    #weaponArt,
+    #monsterArt {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+    }
+
+    .info-box {
+      width: min(100%, 240px);
+      min-height: 120px;
+      padding: 14px 16px;
+      text-align: center;
+      line-height: 1.65;
+      background: linear-gradient(180deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.05) 100%);
+      font-size: 0.97rem;
+    }
+
+    .info-box .row + .row {
+      margin-top: 6px;
+    }
+
+    .attempt-box {
+      min-width: 126px;
+      text-align: center;
+      cursor: pointer;
+      background: linear-gradient(180deg, rgba(124,156,255,0.95) 0%, rgba(93,130,255,0.92) 100%);
+      border-color: rgba(154, 177, 255, 0.35);
+      color: #ffffff;
+    }
+
+    .attempt-box:hover:not(:disabled) {
+      box-shadow:
+        0 16px 28px rgba(42, 72, 170, 0.35),
+        inset 0 1px 0 rgba(255,255,255,0.16);
+      filter: brightness(1.04);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.52;
+      transform: none !important;
+    }
+
+    .progress-wrap {
+      width: min(100%, 228px);
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .progress-wrap.active {
+      display: flex;
+    }
+
+    .progress-label {
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-align: center;
+      letter-spacing: 0.02em;
+      color: var(--muted);
+    }
+
+    .progress-track,
+    .hp-track {
+      width: 100%;
+      height: 16px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      overflow: hidden;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.24);
+    }
+
+    .progress-fill,
+    .hp-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.12s linear;
+    }
+
+    .progress-fill {
+      width: 0%;
+      background: linear-gradient(90deg, #66d19e 0%, #f3c95c 58%, #ff7a7a 100%);
+    }
+
+    .dungeon-view {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .dungeon-list {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .ground-chip {
+      border: 1px solid var(--line-strong);
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.05) 100%);
+      padding: 10px 8px;
+      text-align: center;
+      cursor: pointer;
+      font-weight: 700;
+      color: var(--text);
+      box-shadow: 0 10px 22px rgba(0,0,0,0.14);
+    }
+
+    .ground-chip small {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .ground-chip.active {
+      background: linear-gradient(180deg, rgba(124,156,255,0.2) 0%, rgba(124,156,255,0.08) 100%);
+      border-color: rgba(124,156,255,0.4);
+      box-shadow: 0 14px 28px rgba(42, 72, 170, 0.22);
+    }
+
+    .dungeon-panel {
+      border: 1px solid var(--line-strong);
+      border-radius: 24px;
+      padding: 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.04) 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.08),
+        0 14px 32px rgba(0,0,0,0.16);
+    }
+
+    .dungeon-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .dungeon-title {
+      font-size: 1.08rem;
+      font-weight: 800;
+    }
+
+    .dungeon-sub {
+      color: var(--muted);
+      font-size: 0.86rem;
+      margin-top: 4px;
+    }
+
+    .reward-badge {
+      border: 1px solid rgba(255, 224, 138, 0.2);
+      background: rgba(255, 224, 138, 0.08);
+      color: #ffe08a;
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-size: 0.83rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .monster-card {
+      width: 100%;
+      border: none;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .monster-name {
+      margin-top: 12px;
+      text-align: center;
+      font-size: 1.04rem;
+      font-weight: 800;
+    }
+
+    .monster-hint {
+      margin-top: 6px;
+      text-align: center;
+      font-size: 0.84rem;
+      color: var(--muted);
+    }
+
+    .hp-section {
+      margin-top: 14px;
+    }
+
+    .hp-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 0.88rem;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .hp-fill {
+      width: 0%;
+      background: linear-gradient(90deg, #6ae09b 0%, #ffd25d 60%, #ff7a7a 100%);
+    }
+
+    .dungeon-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .stat-card {
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.05);
+      padding: 10px 8px;
+      text-align: center;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .stat-value {
+      font-size: 0.96rem;
+      font-weight: 800;
+    }
+
+    .footer-actions {
+      margin-top: 16px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .small-btn {
+      border: 1px solid var(--line-strong);
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.05) 100%);
+      padding: 9px 12px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 10px 22px rgba(0,0,0,0.14);
+    }
+
+    .message {
+      margin-top: 16px;
+      min-height: 60px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.04) 100%);
+      border: 1px solid var(--line-strong);
+      border-radius: 18px;
+      padding: 12px 14px;
+      font-weight: 700;
+      line-height: 1.5;
+      text-align: center;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.08),
+        0 10px 24px rgba(0,0,0,0.15);
+    }
+
+    .message.success {
+      color: #7ce4a5;
+    }
+
+    .message.fail {
+      color: #ffc97a;
+    }
+
+    .message.destroy {
+      color: #ff8d8d;
+    }
+
+    .hint {
+      margin-top: 12px;
+      font-size: 0.87rem;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .hint.hidden {
+      display: none;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      15% { transform: translateX(-4px); }
+      30% { transform: translateX(4px); }
+      45% { transform: translateX(-3px); }
+      60% { transform: translateX(3px); }
+      75% { transform: translateX(-2px); }
+    }
+
+    @keyframes glowSuccess {
+      0% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 14px 32px rgba(0,0,0,0.2), 0 0 0 rgba(87, 199, 133, 0); }
+      30% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 14px 32px rgba(0,0,0,0.2), 0 0 26px rgba(87, 199, 133, 0.45); }
+      100% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 14px 32px rgba(0,0,0,0.2), 0 0 0 rgba(87, 199, 133, 0); }
+    }
+
+    @keyframes flashDestroy {
+      0% { background: linear-gradient(180deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.04) 100%); }
+      30% { background: linear-gradient(180deg, rgba(255,107,107,0.32) 0%, rgba(255,107,107,0.12) 100%); }
+      100% { background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 10px;
+      }
+
+      .game-frame {
+        min-height: auto;
+        padding: 16px 12px 20px;
+        border-radius: 22px;
+      }
+
+      .weapon-display {
+        width: 138px;
+        height: 164px;
+      }
+
+      .dungeon-list,
+      .dungeon-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .top-actions {
+        gap: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="game-frame">
+    <section class="top-row">
+      <div class="top-actions">
+        <button id="sellBtn" class="outlined-box shop-box">무기 판매</button>
+        <button id="modeBtn" class="outlined-box mode-box">던전</button>
+      </div>
+      <div id="goldBox" class="outlined-box gold-box">골드 1,000</div>
+    </section>
+
+    <section class="content-area">
+      <section id="enhanceView" class="view active">
+        <div class="center-area">
+          <div id="weaponName" class="outlined-box weapon-name-box">+0 낡은 검</div>
+
+          <div id="weaponDisplay" class="weapon-display" aria-label="현재 무기">
+            <div id="weaponArt"></div>
+          </div>
+
+          <div id="infoBox" class="outlined-box info-box">
+            <div class="row">강화 100% / 유지 0% / 파괴 0%</div>
+            <div class="row">소모 골드 100 · 일반</div>
+            <div class="row">공격력 2</div>
+          </div>
+
+          <div id="progressWrap" class="progress-wrap" aria-live="polite">
+            <div id="progressLabel" class="progress-label">고강화 긴장도</div>
+            <div class="progress-track">
+              <div id="progressFill" class="progress-fill"></div>
+            </div>
+          </div>
+
+          <button id="attemptBtn" class="outlined-box attempt-box">강화 시도</button>
+        </div>
+
+        <div class="footer-actions">
+          <button id="buyBtn" class="small-btn">새 무기 구매</button>
+          <button id="resetBtn" class="small-btn">초기화</button>
+        </div>
+      </section>
+
+      <section id="dungeonView" class="view">
+        <div class="dungeon-view">
+          <div id="groundList" class="dungeon-list"></div>
+
+          <div class="dungeon-panel">
+            <div class="dungeon-header">
+              <div>
+                <div id="groundTitle" class="dungeon-title">초원</div>
+                <div id="groundRecommend" class="dungeon-sub">추천 강화 +0 ~ +2</div>
+              </div>
+              <div id="rewardBadge" class="reward-badge">보상 25 골드</div>
+            </div>
+
+            <button id="monsterBtn" class="monster-card" type="button">
+              <div id="monsterDisplay" class="monster-display" aria-label="몬스터를 클릭해 공격">
+                <div id="monsterArt"></div>
+              </div>
+            </button>
+
+            <div id="monsterName" class="monster-name">들쥐 슬라임</div>
+            <div class="monster-hint">몬스터를 클릭하면 현재 무기의 공격력으로 피해를 줍니다.</div>
+
+            <div class="hp-section">
+              <div class="hp-label">
+                <span>몬스터 체력</span>
+                <span id="monsterHpText">12 / 12</span>
+              </div>
+              <div class="hp-track">
+                <div id="monsterHpFill" class="hp-fill"></div>
+              </div>
+            </div>
+
+            <div class="dungeon-stats">
+              <div class="stat-card">
+                <div class="stat-label">플레이어 공격력</div>
+                <div id="playerAtkValue" class="stat-value">2</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">몬스터 방어력</div>
+                <div id="monsterDefValue" class="stat-value">0</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">예상 피해</div>
+                <div id="damageValue" class="stat-value">2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <div id="message" class="message">검을 강화해 최고 단계에 도전하거나, 던전에서 골드를 수급하세요.</div>
+    <div id="hint" class="hint">7강 이상부터는 결과가 늦게 공개됩니다. 새 무기 구매는 판매 또는 파괴 이후에 가능합니다.</div>
+  </main>
+
+  <script>
+    const weaponCatalog = {
+      sword: {
+        key: 'sword',
+        rarityName: '일반',
+        buyLabel: '낡은 검',
+        sellMultiplier: 1,
+        attackMultiplier: 1,
+        names: [
+          '낡은 검',
+          '손질된 낡은 검',
+          '정비된 낡은 검',
+          '수리된 검',
+          '단단한 검',
+          '강화된 검',
+          '정교한 검',
+          '숙련자의 검',
+          '잘 벼려진 검',
+          '균형 잡힌 검',
+          '뛰어난 검',
+          '걸작의 검',
+          '명장의 검',
+          '전설적인 검',
+          '위대한 검',
+          '궁극의 검'
+        ]
+      },
+      axe: {
+        key: 'axe',
+        rarityName: '일반',
+        buyLabel: '낡은 도끼',
+        sellMultiplier: 1,
+        attackMultiplier: 1,
+        names: [
+          '낡은 도끼',
+          '손질된 낡은 도끼',
+          '정비된 낡은 도끼',
+          '수리된 도끼',
+          '묵직한 도끼',
+          '튼튼한 도끼',
+          '잘 벼린 도끼',
+          '숙련자의 도끼',
+          '날 선 도끼',
+          '위력적인 도끼',
+          '강력한 도끼',
+          '위대한 도끼',
+          '명장의 도끼',
+          '전설적인 도끼',
+          '파괴적인 도끼',
+          '궁극의 도끼'
+        ]
+      },
+      club: {
+        key: 'club',
+        rarityName: '일반',
+        buyLabel: '허름한 몽둥이',
+        sellMultiplier: 1,
+        attackMultiplier: 1,
+        names: [
+          '허름한 몽둥이',
+          '손질된 허름한 몽둥이',
+          '정비된 허름한 몽둥이',
+          '수리된 몽둥이',
+          '묵직한 몽둥이',
+          '단단한 몽둥이',
+          '두꺼운 몽둥이',
+          '숙련자의 몽둥이',
+          '강타의 몽둥이',
+          '분쇄의 몽둥이',
+          '파괴의 몽둥이',
+          '압도의 몽둥이',
+          '거인의 몽둥이',
+          '전설의 몽둥이',
+          '파멸의 몽둥이',
+          '절대의 몽둥이'
+        ]
+      },
+      staff: {
+        key: 'staff',
+        rarityName: '희귀',
+        buyLabel: '오래된 유물의 지팡이',
+        sellMultiplier: 5,
+        attackMultiplier: 2,
+        names: [
+          '오래된 유물의 지팡이',
+          '봉인된 유물의 지팡이',
+          '깨어나는 유물의 지팡이',
+          '각성한 유물의 지팡이',
+          '현자의 유물 지팡이',
+          '대마법사의 지팡이',
+          '고대 현자의 지팡이',
+          '잊혀진 왕국의 지팡이',
+          '태고의 지팡이',
+          '영겁의 지팡이',
+          '지배자의 지팡이',
+          '전설의 지팡이',
+          '창세의 지팡이',
+          '별의 지팡이',
+          '세계의 지팡이',
+          '신화의 지팡이'
+        ]
+      }
+    };
+
+    const purchasePool = [
+      { key: 'sword', chance: 0.30 },
+      { key: 'axe', chance: 0.30 },
+      { key: 'club', chance: 0.30 },
+      { key: 'staff', chance: 0.10 }
+    ];
+
+    const atkTable = [2, 3, 4, 5, 7, 9, 12, 15, 19, 24, 30, 37, 46, 57, 70, 86];
+
+    const levelTable = [
+      { success: 100, keep: 0, destroy: 0, cost: 100 },
+      { success: 92, keep: 8, destroy: 0, cost: 140 },
+      { success: 84, keep: 16, destroy: 0, cost: 190 },
+      { success: 76, keep: 24, destroy: 0, cost: 260 },
+      { success: 68, keep: 28, destroy: 4, cost: 340 },
+      { success: 58, keep: 32, destroy: 10, cost: 440 },
+      { success: 48, keep: 36, destroy: 16, cost: 560 },
+      { success: 39, keep: 38, destroy: 23, cost: 700 },
+      { success: 31, keep: 40, destroy: 29, cost: 880 },
+      { success: 24, keep: 41, destroy: 35, cost: 1080 },
+      { success: 18, keep: 42, destroy: 40, cost: 1320 },
+      { success: 13, keep: 43, destroy: 44, cost: 1600 },
+      { success: 10, keep: 42, destroy: 48, cost: 1920 },
+      { success: 7, keep: 41, destroy: 52, cost: 2280 },
+      { success: 5, keep: 40, destroy: 55, cost: 2680 },
+      { success: 0, keep: 0, destroy: 0, cost: 0 }
+    ];
+
+    const sellPrices = [120, 180, 260, 360, 490, 660, 900, 1200, 1600, 2100, 2700, 3400, 4300, 5400, 6700, 8200];
+
+    const huntingGrounds = [
+      { name: '초원', recommend: '+0 ~ +2', hp: 12, def: 0, gold: 25, monsterName: '들쥐 슬라임', theme: 'meadow' },
+      { name: '동굴', recommend: '+3 ~ +5', hp: 18, def: 3, gold: 70, monsterName: '암흑 박쥐', theme: 'cave' },
+      { name: '폐광', recommend: '+6 ~ +7', hp: 35, def: 8, gold: 180, monsterName: '수정 광부 골렘', theme: 'mine' },
+      { name: '유적', recommend: '+8 ~ +9', hp: 60, def: 12, gold: 420, monsterName: '유적의 수호상', theme: 'ruins' },
+      { name: '심연', recommend: '+10 ~ +12', hp: 120, def: 18, gold: 950, monsterName: '심연의 감시자', theme: 'abyss' },
+      { name: '지옥', recommend: '+13 ~ +15', hp: 220, def: 35, gold: 2200, monsterName: '지옥의 악마군주', theme: 'hell' }
+    ];
+
+    const state = {
+      gold: 1000,
+      weaponType: 'sword',
+      weaponLevel: 0,
+      destroyed: false,
+      busy: false,
+      maxLevel: 15,
+      currentView: 'enhance',
+      selectedGround: 0,
+      monsterHp: huntingGrounds[0].hp,
+      monsterBusy: false
+    };
+
+    const goldBox = document.getElementById('goldBox');
+    const sellBtn = document.getElementById('sellBtn');
+    const modeBtn = document.getElementById('modeBtn');
+    const enhanceView = document.getElementById('enhanceView');
+    const dungeonView = document.getElementById('dungeonView');
+    const weaponName = document.getElementById('weaponName');
+    const weaponDisplay = document.getElementById('weaponDisplay');
+    const weaponArt = document.getElementById('weaponArt');
+    const infoBox = document.getElementById('infoBox');
+    const progressWrap = document.getElementById('progressWrap');
+    const progressLabel = document.getElementById('progressLabel');
+    const progressFill = document.getElementById('progressFill');
+    const attemptBtn = document.getElementById('attemptBtn');
+    const buyBtn = document.getElementById('buyBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const groundList = document.getElementById('groundList');
+    const groundTitle = document.getElementById('groundTitle');
+    const groundRecommend = document.getElementById('groundRecommend');
+    const rewardBadge = document.getElementById('rewardBadge');
+    const monsterBtn = document.getElementById('monsterBtn');
+    const monsterDisplay = document.getElementById('monsterDisplay');
+    const monsterArt = document.getElementById('monsterArt');
+    const monsterName = document.getElementById('monsterName');
+    const monsterHpText = document.getElementById('monsterHpText');
+    const monsterHpFill = document.getElementById('monsterHpFill');
+    const playerAtkValue = document.getElementById('playerAtkValue');
+    const monsterDefValue = document.getElementById('monsterDefValue');
+    const damageValue = document.getElementById('damageValue');
+    const message = document.getElementById('message');
+    const hint = document.getElementById('hint');
+
+    function formatGold(value) {
+      return `${value.toLocaleString('ko-KR')}`;
+    }
+
+    function getWeaponData() {
+      return weaponCatalog[state.weaponType];
+    }
+
+    function getGround() {
+      return huntingGrounds[state.selectedGround];
+    }
+
+    function getCurrentData() {
+      return levelTable[Math.min(state.weaponLevel, state.maxLevel)];
+    }
+
+    function getCurrentAtk() {
+      if (state.destroyed) return 0;
+      const weapon = getWeaponData();
+      const baseAtk = atkTable[Math.min(state.weaponLevel, state.maxLevel)] || 0;
+      return baseAtk * weapon.attackMultiplier;
+    }
+
+    function getDamage(playerAtk, monsterDef) {
+      return Math.max(0, playerAtk - monsterDef);
+    }
+
+    function currentWeaponText() {
+      return `+${state.weaponLevel} ${getWeaponData().names[state.weaponLevel]}`;
+    }
+
+    function getSellPrice() {
+      const base = sellPrices[Math.min(state.weaponLevel, state.maxLevel)] || 0;
+      return base * getWeaponData().sellMultiplier;
+    }
+
+    function setMessage(text, type = '') {
+      message.textContent = text;
+      message.className = `message${type ? ` ${type}` : ''}`;
+    }
+
+    function getVisualTier(level) {
+      if (level >= 15) return 3;
+      if (level >= 10) return 2;
+      if (level >= 5) return 1;
+      return 0;
+    }
+
+    function getWeaponSVG(type, level, destroyed) {
+      const tier = getVisualTier(level);
+      const opacity = destroyed ? 0.26 : 1;
+      const scale = 1 + Math.min(level, 15) * 0.014;
+      const suffix = `${type}-${tier}-${level}`;
+
+      if (type === 'axe') {
+        const configs = [
+          { woodTop: '#8f6238', woodBottom: '#5b3820', metalTop: '#f9fbff', metalBottom: '#9aa3b1', edge: '#6f7885', ring: 'rgba(255,255,255,0)', gem: '#c99a4d', glow: 'rgba(0,0,0,0)' },
+          { woodTop: '#9f6a32', woodBottom: '#68401f', metalTop: '#ffffff', metalBottom: '#b9c9da', edge: '#7c8797', ring: 'rgba(99,189,255,0.28)', gem: '#4ec3ff', glow: 'rgba(78,195,255,0.18)' },
+          { woodTop: '#6d431d', woodBottom: '#41240e', metalTop: '#fff0bf', metalBottom: '#d2a54f', edge: '#8f6320', ring: 'rgba(255,200,92,0.32)', gem: '#ffd86a', glow: 'rgba(255,216,106,0.22)' },
+          { woodTop: '#4b210f', woodBottom: '#2d1208', metalTop: '#fff2da', metalBottom: '#ff9c4f', edge: '#a84e18', ring: 'rgba(255,122,72,0.34)', gem: '#ff8b57', glow: 'rgba(255,139,87,0.28)' }
+        ][tier];
+
+        return `
+          <svg viewBox="0 0 140 140" width="114" height="114" aria-hidden="true" style="opacity:${opacity}; transform: rotate(-12deg) scale(${scale}); filter: drop-shadow(0 10px 14px rgba(0,0,0,0.28));">
+            <defs>
+              <linearGradient id="axeWood-${suffix}" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="${configs.woodTop}"/>
+                <stop offset="100%" stop-color="${configs.woodBottom}"/>
+              </linearGradient>
+              <linearGradient id="axeMetal-${suffix}" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="${configs.metalTop}"/>
+                <stop offset="100%" stop-color="${configs.metalBottom}"/>
+              </linearGradient>
+            </defs>
+            <circle cx="70" cy="58" r="36" fill="${configs.ring}"/>
+            <rect x="66" y="18" width="12" height="90" rx="5" fill="url(#axeWood-${suffix})" stroke="#432714" stroke-width="2"/>
+            <rect x="62" y="102" width="20" height="18" rx="7" fill="#b38747" stroke="#6c4b1a" stroke-width="2"/>
+            <path d="M74 28 C 98 10, 118 14, 122 36 C 122 56, 108 66, 82 70 L 74 58 Z" fill="url(#axeMetal-${suffix})" stroke="${configs.edge}" stroke-width="3"/>
+            <path d="M74 30 C 54 18, 44 22, 38 34 C 35 46, 45 55, 66 58 Z" fill="#b9c4d2" stroke="${configs.edge}" stroke-width="3"/>
+            <rect x="58" y="56" width="28" height="8" rx="3" fill="#c99a4d" stroke="#71490e" stroke-width="2"/>
+            ${tier >= 1 ? `<circle cx="72" cy="60" r="5" fill="${configs.gem}"/>` : ''}
+            ${tier >= 2 ? `<path d="M92 24 L100 32 L92 40" fill="none" stroke="${configs.gem}" stroke-width="3" stroke-linecap="round"/>` : ''}
+            ${tier >= 3 ? `<path d="M46 28 L38 36 L46 44" fill="none" stroke="${configs.gem}" stroke-width="3" stroke-linecap="round"/>` : ''}
+          </svg>
+        `;
+      }
+
+      if (type === 'club') {
+        const configs = [
+          { top: '#9c6a3f', bottom: '#5d381e', band: '#be9354', aura: 'rgba(0,0,0,0)', spike: '#4a2d17' },
+          { top: '#a76d34', bottom: '#6a3f1d', band: '#8fdcff', aura: 'rgba(84,209,255,0.18)', spike: '#5b3518' },
+          { top: '#835023', bottom: '#4c2911', band: '#ffd36b', aura: 'rgba(255,211,107,0.22)', spike: '#3b1f0f' },
+          { top: '#5f2d12', bottom: '#2a1209', band: '#ff8c64', aura: 'rgba(255,140,100,0.28)', spike: '#2d1208' }
+        ][tier];
+
+        return `
+          <svg viewBox="0 0 140 140" width="114" height="114" aria-hidden="true" style="opacity:${opacity}; transform: rotate(-15deg) scale(${scale}); filter: drop-shadow(0 10px 14px rgba(0,0,0,0.28));">
+            <circle cx="70" cy="54" r="34" fill="${configs.aura}"/>
+            <path d="M78 16 C 96 18, 107 31, 106 47 C 104 67, 92 84, 80 95 L 62 95 C 55 78, 52 61, 54 42 C 57 24, 66 16, 78 16 Z" fill="url(#clubWood-${suffix})" stroke="#4a2d17" stroke-width="3"/>
+            <defs>
+              <linearGradient id="clubWood-${suffix}" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="${configs.top}"/>
+                <stop offset="100%" stop-color="${configs.bottom}"/>
+              </linearGradient>
+            </defs>
+            <rect x="63" y="82" width="14" height="36" rx="6" fill="#7d4f2a" stroke="#492b14" stroke-width="2"/>
+            <rect x="60" y="112" width="20" height="10" rx="5" fill="${configs.band}" stroke="#6c4b1a" stroke-width="2"/>
+            <circle cx="68" cy="36" r="3" fill="${configs.spike}"/>
+            <circle cx="82" cy="48" r="3" fill="${configs.spike}"/>
+            <circle cx="72" cy="58" r="3" fill="${configs.spike}"/>
+            ${tier >= 1 ? `<circle cx="89" cy="35" r="4" fill="${configs.band}"/><circle cx="60" cy="30" r="3" fill="${configs.band}"/>` : ''}
+            ${tier >= 2 ? `<path d="M91 24 L98 14 L105 25" fill="${configs.band}" opacity="0.9"/>` : ''}
+            ${tier >= 3 ? `<path d="M52 22 L44 12 L37 24" fill="${configs.band}" opacity="0.9"/>` : ''}
+          </svg>
+        `;
+      }
+
+      if (type === 'staff') {
+        const configs = [
+          { bodyTop: '#815c32', bodyBottom: '#4c3018', orbOuter: '#7f56da', orbMid: '#d8b4ff', ring: 'rgba(216,180,255,0.22)', rune: '#b890ff' },
+          { bodyTop: '#6d4ca6', bodyBottom: '#3f276c', orbOuter: '#5be1ff', orbMid: '#dbfaff', ring: 'rgba(91,225,255,0.24)', rune: '#79efff' },
+          { bodyTop: '#8b6a24', bodyBottom: '#5a3e12', orbOuter: '#ffc14d', orbMid: '#fff4c9', ring: 'rgba(255,193,77,0.28)', rune: '#ffd86a' },
+          { bodyTop: '#9f4d22', bodyBottom: '#5a1f10', orbOuter: '#ff7d5e', orbMid: '#ffe1d4', ring: 'rgba(255,125,94,0.32)', rune: '#ff9d80' }
+        ][tier];
+
+        return `
+          <svg viewBox="0 0 140 140" width="114" height="114" aria-hidden="true" style="opacity:${opacity}; transform: rotate(-10deg) scale(${scale}); filter: drop-shadow(0 10px 14px rgba(0,0,0,0.28));">
+            <defs>
+              <linearGradient id="staffBody-${suffix}" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="${configs.bodyTop}"/>
+                <stop offset="100%" stop-color="${configs.bodyBottom}"/>
+              </linearGradient>
+              <radialGradient id="staffOrb-${suffix}" cx="50%" cy="40%" r="60%">
+                <stop offset="0%" stop-color="#ffffff"/>
+                <stop offset="45%" stop-color="${configs.orbMid}"/>
+                <stop offset="100%" stop-color="${configs.orbOuter}"/>
+              </radialGradient>
+            </defs>
+            <circle cx="71" cy="20" r="24" fill="${configs.ring}"/>
+            <rect x="66" y="22" width="10" height="92" rx="5" fill="url(#staffBody-${suffix})" stroke="#3c2412" stroke-width="2"/>
+            <path d="M54 24 C 58 14, 67 10, 71 10 C 75 10, 84 14, 88 24" fill="none" stroke="${configs.rune}" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="71" cy="20" r="12" fill="url(#staffOrb-${suffix})" stroke="#e7d4ff" stroke-width="3"/>
+            <circle cx="71" cy="20" r="18" fill="none" stroke="${configs.ring}" stroke-width="4"/>
+            <rect x="62" y="86" width="18" height="12" rx="5" fill="${configs.rune}" opacity="0.5"/>
+            ${tier >= 1 ? `<path d="M54 56 L46 64 L54 72" fill="none" stroke="${configs.rune}" stroke-width="3" stroke-linecap="round"/><path d="M88 56 L96 64 L88 72" fill="none" stroke="${configs.rune}" stroke-width="3" stroke-linecap="round"/>` : ''}
+            ${tier >= 2 ? `<circle cx="49" cy="28" r="4" fill="${configs.rune}"/><circle cx="93" cy="28" r="4" fill="${configs.rune}"/>` : ''}
+            ${tier >= 3 ? `<path d="M71 2 L76 10 L71 18 L66 10 Z" fill="${configs.rune}"/>` : ''}
+          </svg>
+        `;
+      }
+
+      const configs = [
+        { bladeTop: '#f9fbff', bladeBottom: '#a1aab8', edge: '#7e8795', guard: '#cf9f50', aura: 'rgba(0,0,0,0)', jewel: '#ffffff' },
+        { bladeTop: '#ffffff', bladeBottom: '#abd9ff', edge: '#7190ab', guard: '#70c8ff', aura: 'rgba(112,200,255,0.18)', jewel: '#79e1ff' },
+        { bladeTop: '#fff7db', bladeBottom: '#efbc63', edge: '#a06f1e', guard: '#ffd36b', aura: 'rgba(255,211,107,0.22)', jewel: '#ffe8a0' },
+        { bladeTop: '#fff0e8', bladeBottom: '#ff995d', edge: '#b44f1a', guard: '#ff935f', aura: 'rgba(255,147,95,0.28)', jewel: '#ffd0ba' }
+      ][tier];
+
+      return `
+        <svg viewBox="0 0 140 140" width="114" height="114" aria-hidden="true" style="opacity:${opacity}; transform: rotate(-10deg) scale(${scale}); filter: drop-shadow(0 10px 14px rgba(0,0,0,0.28));">
+          <defs>
+            <linearGradient id="bladeMetal-${suffix}" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="${configs.bladeTop}"/>
+              <stop offset="100%" stop-color="${configs.bladeBottom}"/>
+            </linearGradient>
+          </defs>
+          <circle cx="70" cy="56" r="34" fill="${configs.aura}"/>
+          <path d="M70 12 L80 26 L77 82 L63 82 L60 26 Z" fill="url(#bladeMetal-${suffix})" stroke="${configs.edge}" stroke-width="3"/>
+          <rect x="53" y="78" width="34" height="10" rx="4" fill="${configs.guard}" stroke="#71490e" stroke-width="2"/>
+          <rect x="65" y="88" width="10" height="24" rx="3" fill="#704420" stroke="#4b2d14" stroke-width="2"/>
+          <circle cx="70" cy="117" r="8" fill="#d5af59" stroke="#725016" stroke-width="2"/>
+          <path d="M67 26 L73 26" stroke="#ffffff" stroke-width="2" opacity="0.7"/>
+          ${tier >= 1 ? `<circle cx="70" cy="83" r="4" fill="${configs.jewel}"/>` : ''}
+          ${tier >= 2 ? `<path d="M58 33 L70 22 L82 33" fill="none" stroke="${configs.jewel}" stroke-width="3" stroke-linecap="round"/>` : ''}
+          ${tier >= 3 ? `<path d="M70 8 L76 18 L70 28 L64 18 Z" fill="${configs.jewel}" opacity="0.95"/>` : ''}
+        </svg>
+      `;
+    }
+
+    function getMonsterSVG(theme, hpRatio) {
+      const pulse = 0.9 + hpRatio * 0.2;
+      const suffix = `${theme}-${Math.round(hpRatio * 100)}`;
+
+      if (theme === 'meadow') {
+        return `
+          <svg viewBox="0 0 240 220" width="200" height="180" aria-hidden="true" style="transform: scale(${pulse}); filter: drop-shadow(0 12px 18px rgba(0,0,0,0.28));">
+            <defs>
+              <radialGradient id="meadowBody-${suffix}" cx="50%" cy="35%" r="65%">
+                <stop offset="0%" stop-color="#d7ffbd"/>
+                <stop offset="100%" stop-color="#5cd16d"/>
+              </radialGradient>
+            </defs>
+            <ellipse cx="120" cy="174" rx="64" ry="14" fill="rgba(0,0,0,0.22)"/>
+            <circle cx="92" cy="78" r="16" fill="#89e66d" opacity="0.8"/>
+            <path d="M70 150 C 64 96, 86 56, 120 54 C 154 56, 176 96, 170 150 C 166 176, 150 188, 120 190 C 90 188, 74 176, 70 150 Z" fill="url(#meadowBody-${suffix})" stroke="#2d8b46" stroke-width="4"/>
+            <circle cx="102" cy="118" r="8" fill="#21343c"/>
+            <circle cx="138" cy="118" r="8" fill="#21343c"/>
+            <path d="M104 144 Q 120 156 136 144" fill="none" stroke="#2b5b2f" stroke-width="5" stroke-linecap="round"/>
+            <path d="M116 48 Q 124 28 140 24" fill="none" stroke="#7ae06d" stroke-width="6" stroke-linecap="round"/>
+            <path d="M134 28 Q 150 18 160 26" fill="none" stroke="#7ae06d" stroke-width="6" stroke-linecap="round"/>
+          </svg>
+        `;
+      }
+
+      if (theme === 'cave') {
+        return `
+          <svg viewBox="0 0 240 220" width="206" height="182" aria-hidden="true" style="transform: scale(${pulse}); filter: drop-shadow(0 12px 18px rgba(0,0,0,0.32));">
+            <ellipse cx="120" cy="176" rx="68" ry="14" fill="rgba(0,0,0,0.26)"/>
+            <path d="M56 104 Q 84 58 120 82 Q 156 58 184 104 Q 164 118 152 126 L 150 94 L 132 116 L 120 84 L 108 116 L 90 94 L 88 126 Q 76 118 56 104 Z" fill="#504f67" stroke="#8a8baa" stroke-width="4"/>
+            <path d="M86 126 Q 120 168 154 126" fill="#3a394b" stroke="#7a7c96" stroke-width="4"/>
+            <circle cx="98" cy="116" r="7" fill="#67e3ff"/>
+            <circle cx="142" cy="116" r="7" fill="#67e3ff"/>
+            <path d="M112 132 Q 120 140 128 132" fill="none" stroke="#c0d7e5" stroke-width="4" stroke-linecap="round"/>
+            <path d="M78 84 L 60 60 L 86 70 Z" fill="#6f7296"/>
+            <path d="M162 84 L 180 60 L 154 70 Z" fill="#6f7296"/>
+          </svg>
+        `;
+      }
+
+      if (theme === 'mine') {
+        return `
+          <svg viewBox="0 0 240 220" width="206" height="182" aria-hidden="true" style="transform: scale(${pulse}); filter: drop-shadow(0 12px 18px rgba(0,0,0,0.32));">
+            <ellipse cx="120" cy="178" rx="68" ry="14" fill="rgba(0,0,0,0.26)"/>
+            <path d="M74 150 L 86 88 L 118 64 L 154 78 L 166 142 L 142 170 L 98 170 Z" fill="#7c7f88" stroke="#454a54" stroke-width="5"/>
+            <path d="M118 64 L 132 42 L 150 54 L 142 78 Z" fill="#63dcff" stroke="#bcf5ff" stroke-width="3"/>
+            <path d="M88 106 L 70 94 L 84 74 L 102 90 Z" fill="#79e1ff" stroke="#d1fbff" stroke-width="3"/>
+            <path d="M148 116 L 170 104 L 176 128 L 156 136 Z" fill="#5fd6ff" stroke="#cbf7ff" stroke-width="3"/>
+            <circle cx="108" cy="120" r="7" fill="#c9f8ff"/>
+            <circle cx="138" cy="120" r="7" fill="#c9f8ff"/>
+            <rect x="102" y="138" width="36" height="8" rx="4" fill="#49505a"/>
+          </svg>
+        `;
+      }
+
+      if (theme === 'ruins') {
+        return `
+          <svg viewBox="0 0 240 220" width="206" height="182" aria-hidden="true" style="transform: scale(${pulse}); filter: drop-shadow(0 12px 18px rgba(0,0,0,0.34));">
+            <ellipse cx="120" cy="180" rx="70" ry="14" fill="rgba(0,0,0,0.28)"/>
+            <path d="M80 168 L 80 88 L 100 58 L 140 58 L 160 88 L 160 168 Z" fill="#9d8c74" stroke="#695a48" stroke-width="5"/>
+            <rect x="98" y="86" width="16" height="28" fill="#7e705d"/>
+            <rect x="126" y="86" width="16" height="28" fill="#7e705d"/>
+            <path d="M108 136 Q 120 144 132 136" fill="none" stroke="#655848" stroke-width="5" stroke-linecap="round"/>
+            <rect x="66" y="102" width="18" height="50" rx="8" fill="#8f7d66" stroke="#665845" stroke-width="4"/>
+            <rect x="156" y="102" width="18" height="50" rx="8" fill="#8f7d66" stroke="#665845" stroke-width="4"/>
+            <path d="M96 58 L 120 36 L 144 58" fill="#c6b28f" stroke="#7b6a55" stroke-width="4"/>
+            <circle cx="120" cy="26" r="8" fill="#65d4ff"/>
+          </svg>
+        `;
+      }
+
+      if (theme === 'abyss') {
+        return `
+          <svg viewBox="0 0 240 220" width="206" height="182" aria-hidden="true" style="transform: scale(${pulse}); filter: drop-shadow(0 12px 18px rgba(0,0,0,0.36));">
+            <ellipse cx="120" cy="180" rx="72" ry="14" fill="rgba(0,0,0,0.3)"/>
+            <circle cx="120" cy="116" r="58" fill="rgba(119, 70, 255, 0.18)"/>
+            <path d="M62 118 C 70 70, 98 44, 120 44 C 142 44, 170 70, 178 118 C 170 156, 146 182, 120 182 C 94 182, 70 156, 62 118 Z" fill="#171323" stroke="#54437c" stroke-width="5"/>
+            <ellipse cx="120" cy="118" rx="34" ry="22" fill="#d8f3ff" stroke="#8fd0ff" stroke-width="4"/>
+            <circle cx="120" cy="118" r="12" fill="#6e3bff"/>
+            <path d="M72 88 L 54 70 L 70 62" fill="none" stroke="#7f6bca" stroke-width="5" stroke-linecap="round"/>
+            <path d="M168 88 L 186 70 L 170 62" fill="none" stroke="#7f6bca" stroke-width="5" stroke-linecap="round"/>
+            <path d="M92 166 L 82 188" fill="none" stroke="#5b4ba2" stroke-width="5" stroke-linecap="round"/>
+            <path d="M148 166 L 158 188" fill="none" stroke="#5b4ba2" stroke-width="5" stroke-linecap="round"/>
+          </svg>
+        `;
+      }
+
+      return `
+        <svg viewBox="0 0 240 220" width="206" height="182" aria-hidden="true" style="transform: scale(${pulse}); filter: drop-shadow(0 12px 18px rgba(0,0,0,0.38));">
+          <ellipse cx="120" cy="182" rx="74" ry="14" fill="rgba(0,0,0,0.32)"/>
+          <circle cx="120" cy="100" r="56" fill="rgba(255, 110, 72, 0.16)"/>
+          <path d="M74 164 C 66 110, 82 62, 120 56 C 158 62, 174 110, 166 164 Z" fill="#8e1f14" stroke="#ff8a57" stroke-width="5"/>
+          <path d="M92 64 L 78 36 L 100 46 Z" fill="#ff9a6e"/>
+          <path d="M148 64 L 162 36 L 140 46 Z" fill="#ff9a6e"/>
+          <circle cx="102" cy="114" r="9" fill="#ffe68c"/>
+          <circle cx="138" cy="114" r="9" fill="#ffe68c"/>
+          <path d="M102 144 L 114 156 L 126 144 L 138 156" fill="none" stroke="#ffd2a6" stroke-width="5" stroke-linecap="round"/>
+          <path d="M92 176 L 78 200" fill="none" stroke="#ff7a52" stroke-width="6" stroke-linecap="round"/>
+          <path d="M148 176 L 162 200" fill="none" stroke="#ff7a52" stroke-width="6" stroke-linecap="round"/>
+        </svg>
+      `;
+    }
+
+    function clearAnimations() {
+      weaponDisplay.classList.remove('shake', 'success', 'destroyed');
+      monsterDisplay.classList.remove('hit', 'dead');
+      void weaponDisplay.offsetWidth;
+    }
+
+    function renderWeaponVisual() {
+      weaponArt.innerHTML = getWeaponSVG(state.weaponType, state.weaponLevel, state.destroyed);
+    }
+
+    function renderProgressState() {
+      const highLevel = state.weaponLevel >= 7 && !state.destroyed;
+      progressWrap.classList.toggle('active', highLevel);
+      progressFill.style.width = '0%';
+      progressLabel.textContent = highLevel
+        ? `+${state.weaponLevel} → +${state.weaponLevel + 1} 긴장도`
+        : '고강화 긴장도';
+    }
+
+    function renderEnhance() {
+      const weapon = getWeaponData();
+
+      if (state.destroyed) {
+        weaponName.textContent = '파괴된 무기';
+        infoBox.innerHTML = `
+          <div class="row">강화 불가 / 판매만 가능</div>
+          <div class="row">현재 공격력 0</div>
+          <div class="row">새 무기 구매 300 골드</div>
+        `;
+        attemptBtn.disabled = true;
+      } else if (state.weaponLevel >= state.maxLevel) {
+        weaponName.textContent = currentWeaponText();
+        infoBox.innerHTML = `
+          <div class="row">최종 강화 달성 · ${weapon.rarityName}</div>
+          <div class="row">공격력 ${getCurrentAtk()}</div>
+          <div class="row">판매가 ${formatGold(getSellPrice())}</div>
+        `;
+        attemptBtn.disabled = true;
+      } else {
+        const data = getCurrentData();
+        weaponName.textContent = currentWeaponText();
+        infoBox.innerHTML = `
+          <div class="row">강화 ${data.success}% / 유지 ${data.keep}% / 파괴 ${data.destroy}%</div>
+          <div class="row">소모 골드 ${formatGold(data.cost)} · ${weapon.rarityName}</div>
+          <div class="row">공격력 ${getCurrentAtk()}</div>
+        `;
+        attemptBtn.disabled = state.busy;
+      }
+
+      buyBtn.disabled = !state.destroyed || state.gold < 300 || state.busy || state.monsterBusy;
+      resetBtn.disabled = state.busy || state.monsterBusy;
+      sellBtn.disabled = state.busy || state.monsterBusy;
+
+      renderProgressState();
+      renderWeaponVisual();
+    }
+
+    function renderGroundButtons() {
+      groundList.innerHTML = huntingGrounds.map((ground, index) => `
+        <button class="ground-chip ${index === state.selectedGround ? 'active' : ''}" data-index="${index}" type="button">
+          ${ground.name}
+          <small>${ground.recommend}</small>
+        </button>
+      `).join('');
+
+      groundList.querySelectorAll('.ground-chip').forEach((button) => {
+        button.addEventListener('click', () => {
+          if (state.monsterBusy) return;
+          state.selectedGround = Number(button.dataset.index);
+          state.monsterHp = getGround().hp;
+          renderDungeon();
+        });
+      });
+    }
+
+    function renderMonster() {
+      const ground = getGround();
+      const ratio = Math.max(0, state.monsterHp) / ground.hp;
+      monsterArt.innerHTML = getMonsterSVG(ground.theme, ratio);
+      monsterName.textContent = ground.monsterName;
+      monsterHpText.textContent = `${state.monsterHp} / ${ground.hp}`;
+      monsterHpFill.style.width = `${Math.max(0, ratio) * 100}%`;
+      playerAtkValue.textContent = `${getCurrentAtk()}`;
+      monsterDefValue.textContent = `${ground.def}`;
+      damageValue.textContent = `${getDamage(getCurrentAtk(), ground.def)}`;
+      monsterBtn.disabled = state.monsterBusy;
+    }
+
+    function renderDungeon() {
+      const ground = getGround();
+      groundTitle.textContent = ground.name;
+      groundRecommend.textContent = `추천 강화 ${ground.recommend}`;
+      rewardBadge.textContent = `보상 ${formatGold(ground.gold)} 골드`;
+      renderGroundButtons();
+      renderMonster();
+    }
+
+    function renderView() {
+      const isDungeon = state.currentView === 'dungeon';
+      enhanceView.classList.toggle('active', !isDungeon);
+      dungeonView.classList.toggle('active', isDungeon);
+      modeBtn.textContent = isDungeon ? '강화' : '던전';
+      modeBtn.classList.toggle('active', isDungeon);
+      hint.textContent = isDungeon
+        ? '지역에 맞는 몬스터를 클릭해 처치하면 골드를 얻습니다. 예상 피해가 0이면 더 강한 무기가 필요합니다.'
+        : '7강 이상부터는 결과가 늦게 공개됩니다. 새 무기 구매는 판매 또는 파괴 이후에 가능합니다.';
+    }
+
+    function render() {
+      goldBox.textContent = `골드 ${formatGold(state.gold)}`;
+      renderEnhance();
+      renderDungeon();
+      renderView();
+    }
+
+    function randomOutcome({ success, keep }) {
+      const roll = Math.random() * 100;
+      if (roll < success) return 'success';
+      if (roll < success + keep) return 'keep';
+      return 'destroy';
+    }
+
+    function rollNewWeapon() {
+      const roll = Math.random();
+      let acc = 0;
+      for (const item of purchasePool) {
+        acc += item.chance;
+        if (roll <= acc) return item.key;
+      }
+      return 'staff';
+    }
+
+    function applyOutcome(outcome) {
+      clearAnimations();
+
+      if (outcome === 'success') {
+        state.weaponLevel += 1;
+        weaponDisplay.classList.add('success');
+        setMessage(`강화 성공. ${currentWeaponText()}이 되었습니다. 공격력은 ${getCurrentAtk()}입니다.`, 'success');
+        if (state.weaponLevel >= state.maxLevel) {
+          setMessage(`축하합니다. ${currentWeaponText()} 완성. 최종 공격력은 ${getCurrentAtk()}입니다.`, 'success');
+        }
+      } else if (outcome === 'keep') {
+        weaponDisplay.classList.add('shake');
+        setMessage(`강화 실패. 단계는 유지되었습니다. 현재 공격력은 ${getCurrentAtk()}입니다.`, 'fail');
+      } else {
+        state.destroyed = true;
+        weaponDisplay.classList.add('destroyed');
+        setMessage('강화 실패. 무기가 파괴되었습니다.', 'destroy');
+      }
+
+      state.busy = false;
+      render();
+    }
+
+    function playProgressThenResolve(data) {
+      state.busy = true;
+      attemptBtn.disabled = true;
+      sellBtn.disabled = true;
+      buyBtn.disabled = true;
+      resetBtn.disabled = true;
+      progressWrap.classList.add('active');
+      progressFill.style.width = '0%';
+      progressLabel.textContent = `+${state.weaponLevel} → +${state.weaponLevel + 1} 판정 중...`;
+      setMessage('숨을 고르세요... 결과를 확인하는 중입니다.');
+      clearAnimations();
+      weaponDisplay.classList.add('shake');
+
+      const duration = 1500 + state.weaponLevel * 150;
+      const start = performance.now();
+      const outcome = randomOutcome(data);
+
+      function tick(now) {
+        const progress = Math.min((now - start) / duration, 1);
+        progressFill.style.width = `${(progress * 100).toFixed(1)}%`;
+        if (progress < 1) {
+          requestAnimationFrame(tick);
+        } else {
+          applyOutcome(outcome);
+        }
+      }
+
+      requestAnimationFrame(tick);
+    }
+
+    function tryEnhance() {
+      if (state.destroyed || state.busy || state.weaponLevel >= state.maxLevel || state.monsterBusy) return;
+
+      const data = getCurrentData();
+      if (state.gold < data.cost) {
+        setMessage('골드가 부족합니다.', 'fail');
+        return;
+      }
+
+      state.gold -= data.cost;
+      render();
+
+      if (state.weaponLevel >= 7) {
+        playProgressThenResolve(data);
+        return;
+      }
+
+      const outcome = randomOutcome(data);
+      applyOutcome(outcome);
+    }
+
+    function sellWeapon() {
+      if (state.busy || state.monsterBusy) return;
+
+      if (state.destroyed) {
+        state.gold += 40;
+        setMessage('파괴된 무기의 잔해를 40 골드에 판매했습니다. 새 무기를 구매하세요.');
+      } else {
+        const price = getSellPrice();
+        state.gold += price;
+        setMessage(`${currentWeaponText()}을 ${formatGold(price)} 골드에 판매했습니다.`, 'success');
+      }
+
+      state.weaponLevel = 0;
+      state.destroyed = true;
+      render();
+    }
+
+    function buyWeapon() {
+      if (state.busy || state.monsterBusy) return;
+      if (!state.destroyed) {
+        setMessage('현재 무기를 먼저 판매하거나 파괴된 상태여야 새 무기를 살 수 있습니다.');
+        return;
+      }
+      if (state.gold < 300) {
+        setMessage('새 무기 구매에 필요한 300 골드가 부족합니다.', 'fail');
+        return;
+      }
+
+      state.gold -= 300;
+      state.weaponType = rollNewWeapon();
+      state.weaponLevel = 0;
+      state.destroyed = false;
+      clearAnimations();
+
+      const weapon = getWeaponData();
+      if (weapon.key === 'staff') {
+        setMessage(`희귀 아이템 등장. ${weapon.buyLabel}을 획득했습니다. 공격력은 ${getCurrentAtk()}이며 판매 가격은 5배입니다.`, 'success');
+      } else {
+        setMessage(`${weapon.buyLabel}을 획득했습니다. 현재 공격력은 ${getCurrentAtk()}입니다.`, 'success');
+      }
+      render();
+    }
+
+    function resetGame() {
+      state.gold = 1000;
+      state.weaponType = 'sword';
+      state.weaponLevel = 0;
+      state.destroyed = false;
+      state.busy = false;
+      state.currentView = 'enhance';
+      state.selectedGround = 0;
+      state.monsterHp = huntingGrounds[0].hp;
+      state.monsterBusy = false;
+      clearAnimations();
+      setMessage('게임을 초기화했습니다. 시작 무기는 낡은 검이며 공격력은 2입니다.');
+      render();
+    }
+
+    function toggleView() {
+      if (state.busy || state.monsterBusy) return;
+      state.currentView = state.currentView === 'enhance' ? 'dungeon' : 'enhance';
+      render();
+    }
+
+    function attackMonster() {
+      if (state.busy || state.monsterBusy) return;
+      if (state.destroyed) {
+        setMessage('무기가 파괴되어 사냥할 수 없습니다. 새 무기를 구매하세요.', 'fail');
+        return;
+      }
+
+      const ground = getGround();
+      const playerAtk = getCurrentAtk();
+      const damage = getDamage(playerAtk, ground.def);
+
+      clearAnimations();
+      monsterDisplay.classList.add('hit');
+
+      if (damage <= 0) {
+        setMessage(`${ground.monsterName}의 방어력이 너무 높아 피해를 주지 못했습니다.`, 'fail');
+        renderDungeon();
+        return;
+      }
+
+      state.monsterHp = Math.max(0, state.monsterHp - damage);
+
+      if (state.monsterHp <= 0) {
+        state.monsterBusy = true;
+        monsterDisplay.classList.add('dead');
+        const reward = ground.gold;
+        state.gold += reward;
+        setMessage(`${ground.monsterName} 처치. ${formatGold(reward)} 골드를 획득했습니다.`, 'success');
+        render();
+
+        setTimeout(() => {
+          state.monsterHp = ground.hp;
+          state.monsterBusy = false;
+          clearAnimations();
+          render();
+        }, 520);
+        return;
+      }
+
+      setMessage(`${ground.monsterName}에게 ${damage} 피해를 주었습니다. 남은 체력은 ${state.monsterHp}입니다.`, 'success');
+      render();
+    }
+
+    sellBtn.addEventListener('click', sellWeapon);
+    modeBtn.addEventListener('click', toggleView);
+    attemptBtn.addEventListener('click', tryEnhance);
+    buyBtn.addEventListener('click', buyWeapon);
+    resetBtn.addEventListener('click', resetGame);
+    monsterBtn.addEventListener('click', attackMonster);
+
+    render();
+  </script>
+</body>
+</html>
